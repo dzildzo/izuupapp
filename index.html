@@ -2,38 +2,295 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IZUUP AI App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IZUUP AI INTERFACE</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
-        .card { background: linear-gradient(135deg, #1e1e1e 0%, #121212 100%); width: 90%; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; margin-top: 20px; }
-        .balance-title { color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .balance-value { font-size: 36px; font-weight: bold; background: linear-gradient(45deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; margin-top: 15px; cursor: pointer; transition: 0.3s; }
-        .btn-main { background: #00d2ff; color: #000; }
-        .btn-sec { background: #222; color: white; border: 1px solid #444; }
-        .status { margin-top: 10px; font-size: 14px; color: #00ff88; }
+        :root {
+            --bg: #0a0a0c;
+            --card: rgba(255, 255, 255, 0.05);
+            --accent: #00d2ff;
+            --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            --text: #ffffff;
+            --text-dim: #888;
+            --danger: #ff4b4b;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Анимированный фон */
+        .glow {
+            position: fixed;
+            width: 300px; height: 300px;
+            background: var(--accent);
+            filter: blur(150px);
+            opacity: 0.15;
+            top: -100px; right: -100px;
+            z-index: -1;
+        }
+
+        /* Страницы */
+        .page {
+            display: none;
+            height: 100vh;
+            padding: 20px;
+            overflow-y: auto;
+            flex-direction: column;
+        }
+        .page.active { display: flex; animation: slideUp 0.3s ease-out; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px;
+        }
+        .brand { font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+        .brand span { color: var(--accent); }
+
+        /* Balance Card */
+        .balance-card {
+            background: var(--accent-gradient);
+            border-radius: 25px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 210, 255, 0.25);
+            margin-bottom: 20px;
+        }
+        .balance-card span { font-size: 14px; opacity: 0.8; text-transform: uppercase; }
+        .balance-card h1 { font-size: 45px; margin: 5px 0; font-weight: 800; }
+
+        /* Grid Buttons */
+        .grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin-bottom: 25px;
+        }
+        .grid-item {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .grid-item:active { background: rgba(255,255,255,0.1); transform: scale(0.96); }
+        .grid-item i { font-size: 22px; color: var(--accent); margin-bottom: 10px; display: block; }
+        .grid-item label { font-size: 13px; font-weight: 600; }
+
+        /* Lists */
+        .item-list { background: var(--card); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .item {
+            padding: 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .item:last-child { border: none; }
+        .item-info { display: flex; align-items: center; gap: 15px; }
+        .item-icon { width: 40px; height: 40px; background: rgba(0,210,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .item-text b { display: block; font-size: 15px; }
+        .item-text small { color: var(--text-dim); font-size: 12px; }
+
+        .price-tag { background: white; color: black; padding: 6px 12px; border-radius: 10px; font-weight: 800; font-size: 12px; }
+
+        /* Auth Buttons */
+        .auth-btn {
+            width: 100%; padding: 15px; border-radius: 15px; border: none;
+            margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px;
+            cursor: pointer;
+        }
+        .google { background: #ffffff; color: #000; }
+        .github { background: #24292e; color: #fff; }
+
+        .back-btn { font-size: 14px; color: var(--accent); margin-bottom: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+
+        /* Bottom Nav */
+        .nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(10, 10, 12, 0.9);
+            backdrop-filter: blur(15px);
+            display: flex; justify-content: space-around;
+            padding: 15px 0 25px; border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-i { color: var(--text-dim); font-size: 20px; }
+        .nav-i.active { color: var(--accent); }
+
     </style>
 </head>
 <body>
-    <img src="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" width="80" style="margin-top: 40px;">
-    <h2>IZUUP AI</h2>
-    
-    <div class="card">
-        <div class="balance-title">Твой Баланс</div>
-        <div class="balance-value" id="user-bal">... VC</div>
-        <div class="status">● Система готова</div>
+
+    <div class="glow"></div>
+
+    <div id="page-home" class="page active">
+        <div class="header">
+            <div class="brand">IZUUP<span>AI</span></div>
+            <i class="fa-solid fa-circle-user" style="font-size: 24px;" onclick="showPage('profile')"></i>
+        </div>
+
+        <div class="balance-card">
+            <span>Ваш кошелек</span>
+            <h1 id="bal-view">1,200 VC</h1>
+            <div style="font-size: 12px; opacity: 0.6;">Лимит запросов: ∞</div>
+        </div>
+
+        <div class="grid">
+            <div class="grid-item" onclick="showPage('deposit')">
+                <i class="fa-solid fa-wallet"></i>
+                <label>Пополнить</label>
+            </div>
+            <div class="grid-item" onclick="showPage('shop')">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <label>Магазин</label>
+            </div>
+            <div class="grid-item" onclick="showPage('profile')">
+                <i class="fa-solid fa-fingerprint"></i>
+                <label>Профиль</label>
+            </div>
+            <div class="grid-item" onclick="handleAction('promo_cmd')">
+                <i class="fa-solid fa-ticket"></i>
+                <label>Промокод</label>
+            </div>
+        </div>
+
+        <div class="section-title" style="margin-bottom:10px; font-weight:700;">Новости сервиса</div>
+        <div class="item-list">
+            <div class="item">
+                <div class="item-info">
+                    <div class="item-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="item-text"><b>Gemini 1.5 Pro 2.0</b><small>Обновление модели доступно</small></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <button class="btn btn-main" onclick="Telegram.WebApp.showAlert('Скоро здесь будет магазин!')">🚀 Купить VC</button>
-    <button class="btn btn-sec" onclick="Telegram.WebApp.close()">Закрыть</button>
+    <div id="page-shop" class="page">
+        <div class="back-btn" onclick="showPage('home')"><i class="fa-solid fa-chevron-left"></i> Назад</div>
+        <h2 style="margin-top:0;">Магазин AI</h2>
+        <div class="item-list">
+            <div class="item" onclick="handleAction('buy_basic')">
+                <div class="item-info">
+                    <div class="item-icon"><i class="fa-solid fa-message"></i></div>
+                    <div class="item-text"><b>Gemini Text</b><small>Все лимиты сняты</small></div>
+                </div>
+                <div class="price-tag">1200 VC</div>
+            </div>
+            <div class="item" onclick="handleAction('buy_ultimate')">
+                <div class="item-info">
+                    <div class="item-icon"><i class="fa-solid fa-video"></i></div>
+                    <div class="item-text"><b>Sora Video AI</b><small>Генерация до 60 сек</small></div>
+                </div>
+                <div class="price-tag">2300 VC</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-deposit" class="page">
+        <div class="back-btn" onclick="showPage('home')"><i class="fa-solid fa-chevron-left"></i> Назад</div>
+        <h2 style="margin-top:0;">Пополнение</h2>
+        <p style="color:var(--text-dim); font-size:14px; margin-bottom:20px;">Выберите удобный способ оплаты:</p>
+        <div class="item-list">
+            <div class="item" onclick="handleAction('dep_stars')">
+                <div class="item-info">
+                    <div class="item-icon"><i class="fa-solid fa-star" style="color:#ffda44;"></i></div>
+                    <div class="item-text"><b>Telegram Stars</b><small>Мгновенное зачисление</small></div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="opacity:0.3;"></i>
+            </div>
+            <div class="item" onclick="handleAction('dep_crypto')">
+                <div class="item-info">
+                    <div class="item-icon"><i class="fa-solid fa-coins" style="color:#00d2ff;"></i></div>
+                    <div class="item-text"><b>Crypto Bot</b><small>USDT, TON, BTC</small></div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="opacity:0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-profile" class="page">
+        <div class="back-btn" onclick="showPage('home')"><i class="fa-solid fa-chevron-left"></i> Назад</div>
+        <div style="text-align:center; margin-bottom:30px;">
+            <div style="width:70px; height:70px; background:var(--accent-gradient); border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:24px;">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <h3 id="u-name" style="margin:0;">User</h3>
+            <span id="u-id" style="color:var(--text-dim); font-size:12px;">ID: 00000000</span>
+        </div>
+
+        <div class="item-list" style="margin-bottom:20px;">
+            <div class="item"><span>Статус:</span><b style="color:var(--accent);">PREMIUM</b></div>
+            <div class="item"><span>Регистрация:</span><b>GitHub</b></div>
+        </div>
+
+        <button class="auth-btn google" onclick="tg.showAlert('Google аккаунт синхронизирован!')">
+            <i class="fa-brands fa-google"></i> Вход через Google
+        </button>
+        <button class="auth-btn github" onclick="tg.showAlert('GitHub аккаунт синхронизирован!')">
+            <i class="fa-brands fa-github"></i> Вход через GitHub
+        </button>
+    </div>
+
+    <div class="nav">
+        <i class="fa-solid fa-house nav-i active" onclick="showPage('home')"></i>
+        <i class="fa-solid fa-store nav-i" onclick="showPage('shop')"></i>
+        <i class="fa-solid fa-wallet nav-i" onclick="showPage('deposit')"></i>
+        <i class="fa-solid fa-user-gear nav-i" onclick="showPage('profile')"></i>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        // В реальном приложении данные берутся через API твоего бота
-        document.getElementById('user-bal').innerText = "1200 VC";
+        tg.enableClosingConfirmation();
+
+        // Настройка цветов темы под Телеграм
+        tg.setHeaderColor('#0a0a0c');
+        tg.setBackgroundColor('#0a0a0c');
+
+        function showPage(pageId) {
+            tg.HapticFeedback.impactOccurred('light');
+            
+            // Скрываем все страницы
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Показываем нужную
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            // Обновляем иконки в навигации
+            document.querySelectorAll('.nav-i').forEach(i => i.classList.remove('active'));
+        }
+
+        function handleAction(action) {
+            tg.HapticFeedback.notificationOccurred('success');
+            // Отправляем данные боту
+            tg.sendData(action);
+            // Закрываем окно, чтобы бот мог прислать ответ/счет
+            tg.close();
+        }
+
+        // Заполнение данных из Telegram
+        if (tg.initDataUnsafe.user) {
+            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name;
+            document.getElementById('u-id').innerText = 'ID: ' + tg.initDataUnsafe.user.id;
+        }
+
+        // Кнопка "Назад" в самом Телеграме
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            showPage('home');
+        });
+
     </script>
 </body>
 </html>
