@@ -1,87 +1,72 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PoulAI Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --bg: #0a0a0c; --card: #1c1c1e; --accent: #007AFF; --text: #fff; }
+        :root { --bg: #0a0a0c; --card: #161618; --accent: #007AFF; --text: #fff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; overflow: hidden; }
-        
-        /* Контейнеры страниц */
         .page { display: none; height: 100vh; flex-direction: column; }
-        .page.active { display: flex; animation: fadeIn 0.2s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Карточки и кнопки */
+        .active { display: flex; }
         .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; text-align: center; }
         .btn { background: var(--accent); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; font-size: 16px; font-weight: 600; margin-bottom: 10px; cursor: pointer; }
         .btn-gray { background: #2c2c2e; }
-
-        /* Чат */
-        #chat-window { flex-grow: 1; overflow-y: auto; padding-bottom: 150px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 12px 16px; border-radius: 15px; max-width: 80%; font-size: 15px; line-height: 1.4; }
-        .ai { background: #2c2c2e; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .user { background: var(--accent); align-self: flex-end; border-bottom-right-radius: 2px; }
-
-        /* Профиль */
-        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #333; }
-        .promo-box { display: flex; gap: 10px; margin-top: 15px; }
-        input { background: #1c1c1e; border: 1px solid #444; color: white; padding: 12px; border-radius: 12px; flex: 1; outline: none; }
-
-        /* Навигация */
         .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; display: flex; justify-content: space-around; padding: 15px 0 30px; border-top: 1px solid #222; }
-        .nav i { color: #555; font-size: 22px; transition: 0.3s; }
-        .nav i.active { color: var(--accent); transform: scale(1.2); }
+        .nav i { color: #555; font-size: 22px; }
+        .nav i.active { color: var(--accent); }
+        input { background: #1c1c1e; border: 1px solid #444; color: white; padding: 12px; border-radius: 12px; flex: 1; outline: none; }
+        #chat-win { flex-grow: 1; overflow-y: auto; padding-bottom: 120px; text-align: left; }
     </style>
 </head>
 <body>
 
     <div id="p-home" class="page active">
-        <div class="card" style="margin-top: 20px;">
-            <h1 id="bal-view" style="font-size: 42px; margin: 0;">0 VC</h1>
-            <p style="opacity: 0.5; margin-top: 5px;">Текущий баланс</p>
+        <div class="card" style="margin-top:20px">
+            <h1 id="b-val">0 VC</h1>
+            <p style="opacity:0.5">Баланс</p>
         </div>
-        <button class="btn" onclick="showP('chat')">🚀 Начать чат</button>
-        <button class="btn btn-gray" onclick="showP('shop')">💎 Купить VC</button>
+        <button class="btn" onclick="showP('chat')">🚀 Открыть чат</button>
+        <button class="btn btn-gray" onclick="showP('shop')">💎 Магазин</button>
     </div>
 
     <div id="p-chat" class="page">
-        <div id="chat-window">
-            <div class="msg ai">Я готов к работе. Какой у тебя вопрос?</div>
+        <div id="lock" style="padding:50px 20px; text-align:center;">
+            <i class="fa-solid fa-lock" style="font-size:40px; color:#007AFF"></i>
+            <h3>Нужен ULTIMATE</h3>
+            <button class="btn" onclick="showP('shop')">Купить</button>
         </div>
-        <div style="position: fixed; bottom: 100px; left: 15px; right: 15px; display: flex; gap: 10px; background: #0a0a0c; padding: 10px 0;">
-            <input type="text" id="chat-inp" placeholder="Спросить нейросеть...">
-            <button class="btn" style="width: 60px; margin:0;" onclick="sendLocalMsg()">></button>
+        <div id="chat-content" style="display:none">
+            <div id="chat-win"><i>AI готов к вопросам...</i></div>
+            <div style="display:flex; gap:10px; padding-bottom:100px;">
+                <input type="text" id="c-inp" placeholder="Спросить...">
+                <button class="btn" style="width:50px; margin:0" onclick="sendL()">></button>
+            </div>
         </div>
     </div>
 
     <div id="p-shop" class="page">
-        <h2 style="text-align: center;">Маркетплейс</h2>
+        <h3>Магазин</h3>
         <div class="card">
-            <h3>ULTIMATE PASS</h3>
-            <p style="font-size: 14px; opacity: 0.7;">Открывает доступ к чату и всем моделям AI.</p>
-            <button class="btn" onclick="sendToBot('buy_ultimate')">2300 VC</button>
+            <b>ULTIMATE PASS</b><br><small>Безлимитный AI</small><br><br>
+            <button class="btn" onclick="sendB('buy_ultimate')">2300 VC</button>
         </div>
-        <button class="btn btn-gray" onclick="sendToBot('pay_stars')">Пополнить через Stars ⭐</button>
-        <button class="btn btn-gray" onclick="sendToBot('pay_crypto')">Пополнить через Crypto ₿</button>
+        <button class="btn btn-gray" onclick="sendB('pay_stars')">Stars ⭐</button>
+        <button class="btn btn-gray" onclick="sendB('pay_crypto')">Crypto ₿</button>
     </div>
 
     <div id="p-profile" class="page">
-        <h2 style="text-align: center;">Настройки профиля</h2>
-        <div class="card" style="text-align: left;">
-            <div class="info-row"><span>Имя:</span> <b id="u-name">User</b></div>
-            <div class="info-row"><span>ID:</span> <code id="u-id">0</code></div>
-            <div class="info-row"><span>Статус:</span> <b id="u-sub" style="color: #007AFF;">FREE</b></div>
+        <h3>Профиль</h3>
+        <div class="card" style="text-align:left">
+            ID: <span id="u-id">0</span><br>
+            Статус: <span id="u-sub">FREE</span>
         </div>
-
         <div class="card">
-            <p style="margin: 0 0 10px 0; font-weight: 600;">Есть промокод?</p>
-            <div class="promo-box">
-                <input type="text" id="promo-inp" placeholder="Код...">
-                <button class="btn" style="width: auto; margin:0; padding: 0 20px;" onclick="claimPromo()">OK</button>
+            <p>Промокод</p>
+            <div style="display:flex; gap:10px">
+                <input type="text" id="pr-inp" placeholder="CODE">
+                <button class="btn" style="width:auto; margin:0; padding:0 20px" onclick="applyPr()">OK</button>
             </div>
         </div>
     </div>
@@ -98,46 +83,39 @@
         tg.expand();
         tg.ready();
 
-        // Загрузка данных
-        const params = new URLSearchParams(window.location.search);
-        const bal = params.get('bal') || '0';
-        const sub = params.get('sub') || 'free';
-        const user = tg.initDataUnsafe.user || { id: 0, first_name: 'Пользователь' };
+        const ps = new URLSearchParams(window.location.search);
+        const b = ps.get('bal') || '0';
+        const s = ps.get('sub') || 'free';
+        const u = tg.initDataUnsafe.user || {id:0};
 
-        document.getElementById('bal-view').innerText = bal + ' VC';
-        document.getElementById('u-name').innerText = user.first_name;
-        document.getElementById('u-id').innerText = user.id;
-        document.getElementById('u-sub').innerText = sub.toUpperCase();
+        document.getElementById('b-val').innerText = b + ' VC';
+        document.getElementById('u-id').innerText = u.id;
+        document.getElementById('u-sub').innerText = s.toUpperCase();
+        if(s === 'ultimate') {
+            document.getElementById('lock').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'block';
+        }
 
         function showP(id) {
             tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
-            
-            // Анимация иконок
             document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-            const map = { home: 0, chat: 1, shop: 2, profile: 3 };
-            document.querySelectorAll('.nav i')[map[id]].classList.add('active');
+            const m = {home:0, chat:1, shop:2, profile:3};
+            document.querySelectorAll('.nav i')[m[id]].classList.add('active');
         }
 
-        function sendToBot(data) {
-            tg.sendData(data);
+        function sendB(d) { tg.sendData(d); }
+        function applyPr() {
+            const v = document.getElementById('pr-inp').value;
+            if(v) tg.sendData("promo:" + v);
         }
-
-        function claimPromo() {
-            const val = document.getElementById('promo-inp').value.trim();
-            if(val) {
-                tg.sendData("promo:" + val);
-            }
-        }
-
-        function sendLocalMsg() {
-            const inp = document.getElementById('chat-inp');
-            const win = document.getElementById('chat-window');
-            if(!inp.value) return;
-            win.innerHTML += `<div class="msg user">${inp.value}</div>`;
-            inp.value = "";
-            win.scrollTo(0, win.scrollHeight);
+        function sendL() {
+            const i = document.getElementById('c-inp');
+            const w = document.getElementById('chat-win');
+            if(!i.value) return;
+            w.innerHTML += `<div><b>Вы:</b> ${i.value}</div>`;
+            i.value = "";
         }
     </script>
 </body>
