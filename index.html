@@ -1,173 +1,81 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IZUUP AI ULTIMATE</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --bg: #0a0a0c; --card: #161618; --accent: #00d2ff; --text: #fff; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; }
-        
-        .page { display: none; height: 100vh; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        .page.active { display: flex; }
-
-        /* Баланс */
-        .balance-card { 
-            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); 
-            border-radius: 24px; padding: 25px; text-align: center; margin-bottom: 20px;
-            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
-        }
-
-        /* Кнопки */
-        .btn { 
-            background: var(--card); border: 1px solid rgba(255,255,255,0.05); 
-            padding: 18px; border-radius: 18px; width: 100%; color: white; 
-            display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
-            cursor: pointer;
-        }
-        .btn:active { transform: scale(0.98); background: #222; }
-
-        /* Чат */
-        #chat-window { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 140px; }
-        .msg { padding: 12px; border-radius: 15px; max-width: 80%; font-size: 14px; }
-        .ai { background: var(--card); align-self: flex-start; border: 1px solid #333; }
-        .user { background: var(--accent); color: #000; align-self: flex-end; font-weight: 500; }
-
-        /* Выбор нейронки */
-        .ai-selector { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
-        .chip { padding: 6px 12px; background: #222; border-radius: 10px; font-size: 12px; border: 1px solid #333; white-space: nowrap; }
-        .chip.active { border-color: var(--accent); color: var(--accent); }
-
-        /* Замок */
-        .lock-overlay { 
-            position: absolute; top:0; left:0; width:100%; height:100%; 
-            background: rgba(10,10,12,0.98); display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
-        }
-
-        /* Поле ввода */
-        .input-bar { 
-            position: fixed; bottom: 85px; left: 15px; right: 15px; 
-            background: #1c1c1e; border-radius: 20px; padding: 10px 15px; 
-            display: flex; align-items: center; gap: 10px; border: 1px solid #333;
-        }
-        input { background: transparent; border: none; color: white; flex: 1; outline: none; }
-
-        /* Навигация */
-        .nav { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; 
-            display: flex; justify-content: space-around; padding: 15px 0 25px; 
-            border-top: 1px solid #222; 
-        }
-        .nav i { color: #555; font-size: 22px; }
-        .nav i.active { color: var(--accent); }
+        body { font-family: sans-serif; background: #0a0a0c; color: white; margin: 0; padding: 20px; }
+        .card { background: #161618; border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; }
+        .btn { background: #007AFF; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
+        .btn-pay { background: #222; border: 1px solid #444; }
+        .page { display: none; }
+        .active { display: block; }
+        #chat-box { height: 300px; overflow-y: auto; background: #000; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+        .lock { text-align: center; padding: 40px 10px; background: rgba(0,0,0,0.9); border-radius: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="p-home" class="page active">
-        <div class="balance-card">
-            <h1 id="bal-val">0 VC</h1>
-            <p style="margin:0; opacity:0.8;">Доступные средства</p>
+    <div id="home" class="page active">
+        <div class="card">
+            <h2 id="bal">0 VC</h2>
+            <p>Ваш баланс</p>
         </div>
-        <button class="btn" onclick="showP('chat')"><span>Интеллектуальный чат</span> <i class="fa-solid fa-comment-dots"></i></button>
-        <button class="btn" onclick="showP('shop')"><span>Магазин подписок</span> <i class="fa-solid fa-bag-shopping"></i></button>
+        <button class="btn" onclick="go('chat')">Открыть Чат</button>
+        <button class="btn btn-pay" onclick="go('shop')">Пополнить / Подписка</button>
     </div>
 
-    <div id="p-chat" class="page">
-        <div id="lock" class="lock-overlay">
-            <i class="fa-solid fa-shield-halved" style="font-size: 50px; color: var(--accent); margin-bottom: 20px;"></i>
-            <h2>Доступ закрыт</h2>
-            <p style="color:#888; margin-bottom:20px;">Claude 3.5, Gemini Pro и Google Genie доступны только в подписке ULTIMATE.</p>
-            <button class="btn" style="background: var(--accent); color: #000; justify-content: center; font-weight: bold;" onclick="showP('shop')">КУПИТЬ ULTIMATE</button>
+    <div id="chat" class="page">
+        <div id="sub-lock" class="lock">
+            <i class="fa-solid fa-lock" style="font-size: 40px; color: #007AFF;"></i>
+            <h3>Нужна подписка ULTIMATE</h3>
+            <button class="btn" onclick="go('shop')">Купить доступ</button>
         </div>
-
-        <div class="ai-selector">
-            <div class="chip active">Gemini 1.5</div>
-            <div class="chip">Claude 3.5</div>
-            <div class="chip">Google Genie</div>
+        <div id="chat-content" style="display:none">
+            <div id="chat-box">Чат готов...</div>
+            <input type="text" style="width:70%; padding:10px; border-radius:10px;">
+            <button class="btn" style="width:25%; display:inline">-></button>
         </div>
-
-        <div id="chat-window">
-            <div class="msg ai">Система готова. Какой запрос проанализировать?</div>
-        </div>
-
-        <div class="input-bar">
-            <label for="f-up"><i class="fa-solid fa-paperclip"></i></label>
-            <input type="file" id="f-up" style="display:none">
-            <input type="text" id="chat-inp" placeholder="Спросить нейросеть...">
-            <i class="fa-solid fa-paper-plane" style="color: var(--accent);" onclick="sendLocal()"></i>
-        </div>
+        <br><button class="btn btn-pay" onclick="go('home')">Назад</button>
     </div>
 
-    <div id="p-shop" class="page">
-        <h2 style="margin-bottom: 20px;">Магазин</h2>
-        <div class="btn" onclick="sendToBot('buy_ultimate')" style="border: 1px solid var(--accent);">
-            <div>
-                <b style="color: var(--accent);">Все нейросети (ULTIMATE)</b><br>
-                <small style="opacity:0.6;">Полный доступ без лимитов</small>
-            </div>
-            <b style="background: #fff; color: #000; padding: 5px 10px; border-radius: 8px;">2300 VC</b>
-        </div>
-
-        <h3 style="margin: 25px 0 15px;">Пополнение баланса</h3>
-        <button class="btn" onclick="sendToBot('pay_stars')">
-            <span>Telegram Stars</span> <i class="fa-solid fa-star" style="color:gold;"></i>
-        </button>
-        <button class="btn" onclick="sendToBot('pay_crypto')">
-            <span>Crypto Pay (USDT)</span> <i class="fa-solid fa-coins" style="color:#00ff88;"></i>
-        </button>
-    </div>
-
-    <div class="nav">
-        <i class="fa-solid fa-house active" onclick="showP('home')"></i>
-        <i class="fa-solid fa-comment" onclick="showP('chat')"></i>
-        <i class="fa-solid fa-wallet" onclick="showP('shop')"></i>
+    <div id="shop" class="page">
+        <h3>Магазин</h3>
+        <button class="btn" onclick="send('buy_ultimate')">Купить ULTIMATE (2300 VC)</button>
+        <button class="btn btn-pay" onclick="send('pay_stars')">Оплатить Stars ⭐</button>
+        <button class="btn btn-pay" onclick="send('pay_crypto')">Оплатить Crypto ₿</button>
+        <br><button class="btn btn-pay" onclick="go('home')">Назад</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready(); // Критически важно для работы sendData
+        tg.ready();
 
-        // Получаем данные от бота
-        const params = new URLSearchParams(window.location.search);
-        const sub = params.get('sub');
-        const bal = params.get('bal');
+        // Читаем данные из ссылки от бота
+        const urlParams = new URLSearchParams(window.location.search);
+        const sub = urlParams.get('sub');
+        const balance = urlParams.get('bal');
 
-        if(bal) document.getElementById('bal-val').innerText = bal + ' VC';
-        if(sub === 'ultimate') document.getElementById('lock').style.display = 'none';
+        if(balance) document.getElementById('bal').innerText = balance + ' VC';
+        if(sub === 'ultimate') {
+            document.getElementById('sub-lock').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'block';
+        }
 
-        function showP(id) {
-            tg.HapticFeedback.impactOccurred('light');
+        function go(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('p-' + id).classList.add('active');
-            
-            document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-            const idx = id === 'home' ? 0 : id === 'chat' ? 1 : 2;
-            document.querySelectorAll('.nav i')[idx].classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
-        // ГЛАВНАЯ ФУНКЦИЯ ОТПРАВКИ (ОПЛАТА)
-        function sendToBot(command) {
-            tg.HapticFeedback.notificationOccurred('success');
-            // Это отправит текст боту и закроет приложение
-            tg.sendData(command); 
-        }
-
-        function sendLocal() {
-            const inp = document.getElementById('chat-inp');
-            if(!inp.value) return;
-            const win = document.getElementById('chat-window');
-            win.innerHTML += `<div class="msg user">${inp.value}</div>`;
-            inp.value = "";
-            win.scrollTo(0, win.scrollHeight);
-            tg.HapticFeedback.impactOccurred('medium');
+        function send(data) {
+            tg.sendData(data); // Отправляет боту команду и закрывает окно
         }
     </script>
 </body>
 </html>
+
 
 
