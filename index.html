@@ -1,119 +1,97 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PoulAI Ultra</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --bg: #050505; --accent: #00d2ff; --card: #121214; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
-        .page { display: none; height: 100vh; padding: 20px; flex-direction: column; }
-        .active { display: flex; }
-        .btn { background: var(--card); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; color: white; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .balance-card { background: linear-gradient(135deg, #00d2ff, #3a7bd5); padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 20px; transition: transform 0.2s; }
-        .nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #0a0a0c; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; }
-        .nav i { font-size: 20px; color: #444; }
-        .nav .active i { color: var(--accent); }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; }
+        :root { --main: #00d2ff; --bg: #000; --card: #111; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-top: 15px; border: 1px solid #222; }
+        .neon-btn { background: var(--main); color: #000; padding: 15px; border-radius: 12px; font-weight: 800; text-align: center; margin: 10px 0; box-shadow: 0 0 15px var(--main); }
+        .tab-nav { display: flex; justify-content: space-around; margin-top: 20px; background: #0a0a0a; padding: 15px; border-radius: 20px; }
+        .tab-nav i { font-size: 20px; color: #444; }
+        .tab-nav i.active { color: var(--main); text-shadow: 0 0 10px var(--main); }
+        select, textarea, input { width: 100%; background: #1a1a1c; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; box-sizing: border-box; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div id="modal">
-    <div style="background:#1a1a1c; padding:30px; border-radius:25px; width:80%; text-align:center;">
-        <h3>Способ оплаты</h3>
-        <div class="btn" onclick="confirmPay('stars')" style="border-color:#f9d71c">Telegram Stars ⭐</div>
-        <div class="btn" onclick="confirmPay('crypto')" style="border-color:#00d2ff">Crypto Bot 💎</div>
-        <p onclick="document.getElementById('modal').style.display='none'">Отмена</p>
+<div class="header">
+    <div><span style="color:var(--main)">●</span> POUL AI</div>
+    <div id="bal" style="font-weight:bold">0 VC</div>
+</div>
+
+<div id="p-home">
+    <div class="card">
+        <small style="color:#555">SYSTEM STATUS</small>
+        <h3 id="sub">FREE VERSION</h3>
+        <div style="height:4px; background:#222; border-radius:2px;">
+            <div style="width:30%; height:100%; background:var(--main); box-shadow:0 0 10px var(--main)"></div>
+        </div>
+    </div>
+    <div class="neon-btn" onclick="pay('ULTRA')">UPGRADE TO ULTRA ($23.0)</div>
+    <div class="neon-btn" style="background:#fff; box-shadow:none;" onclick="pay('PRO')">UPGRADE TO PRO ($14.0)</div>
+    
+    <input type="text" id="promo" placeholder="Ввести промокод...">
+    <button onclick="sendPromo()" style="width:100%; background:none; border:1px solid #333; color:white; padding:10px; margin-top:5px; border-radius:10px;">АКТИВИРОВАТЬ</button>
+</div>
+
+<div id="p-ai" style="display:none">
+    <div class="card">
+        <select id="model">
+            <option value="GPT4">GPT-4o Platinum</option>
+            <option value="CLAUDE">Claude 3.5 Sonnet</option>
+            <option value="GEMINI">Gemini 1.5 Pro</option>
+        </select>
+        <textarea id="msg" placeholder="Твой запрос к ИИ..."></textarea>
+        <div class="neon-btn" onclick="sendAi()">ОТПРАВИТЬ ЗАПРОС</div>
     </div>
 </div>
 
-<div id="p-home" class="page active">
-    <div class="balance-card">
-        <small>BALANCE</small>
-        <h1 id="bal">0 VC</h1>
-        <div id="sub" style="font-size:12px; opacity:0.7">FREE</div>
-    </div>
-    <div class="btn" onclick="showP('chat')">Открыть AI Чат <i class="fa-solid fa-ghost"></i></div>
-    <div class="btn" onclick="showP('shop')">Купить подписку <i class="fa-solid fa-crown"></i></div>
-    <input type="text" id="promo" placeholder="Промокод..." style="width:100%; padding:15px; border-radius:15px; background:#121214; border:1px dashed var(--accent); color:white; margin-top:10px;">
-    <button onclick="sendPromo()" style="width:100%; margin-top:5px; padding:10px; border-radius:10px; background:var(--accent); border:none;">Ок</button>
-</div>
-
-<div id="p-chat" class="page">
-    <div id="chat-box" style="flex:1; overflow-y:auto; padding-bottom:100px;"></div>
-    <div style="position:fixed; bottom:80px; width:90%; left:5%; display:flex; gap:10px; background:#121214; padding:10px; border-radius:20px;">
-        <i class="fa-solid fa-paperclip" onclick="tg.showAlert('Файлы скоро!')"></i>
-        <input id="ai-msg" style="flex:1; background:none; border:none; color:white; outline:none;" placeholder="Спроси PoulAI...">
-        <i class="fa-solid fa-paper-plane" style="color:var(--accent)" onclick="sendMsg()"></i>
-    </div>
-</div>
-
-<div id="p-shop" class="page">
-    <h2>Магазин</h2>
-    <div class="btn" onclick="openShop('PRO')">Тариф PRO <span>1400 VC</span></div>
-    <div class="btn" onclick="openShop('ULTRA')">Тариф ULTRA <span>2300 VC</span></div>
-</div>
-
-<div class="nav">
-    <div onclick="showP('home')" id="n-home" class="active"><i class="fa-solid fa-house"></i></div>
-    <div onclick="showP('chat')" id="n-chat"><i class="fa-solid fa-message"></i></div>
-    <div onclick="showP('shop')" id="n-shop"><i class="fa-solid fa-shop"></i></div>
+<div class="tab-nav">
+    <i class="fa-solid fa-house active" id="n-home" onclick="tab('home')"></i>
+    <i class="fa-solid fa-robot" id="n-ai" onclick="tab('ai')"></i>
+    <i class="fa-solid fa-gear" onclick="tg.showAlert('Настройки скоро!')"></i>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    let selectedPlan = '';
 
-    // БЫСТРЫЙ ЗАПУСК: Берем данные из кэша
-    document.getElementById('bal').innerText = localStorage.getItem('bal') || '0 VC';
-    document.getElementById('sub').innerText = localStorage.getItem('sub') || 'FREE';
-
-    // ОБНОВЛЕНИЕ ДАННЫХ ИЗ URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('bal')) {
-        const b = urlParams.get('bal') + ' VC';
-        const s = urlParams.get('sub').toUpperCase();
-        document.getElementById('bal').innerText = b;
-        document.getElementById('sub').innerText = s;
-        localStorage.setItem('bal', b);
-        localStorage.setItem('sub', s);
+    function tab(id) {
+        document.getElementById('p-home').style.display = id === 'home' ? 'block' : 'none';
+        document.getElementById('p-ai').style.display = id === 'ai' ? 'block' : 'none';
+        document.getElementById('n-home').classList.toggle('active', id === 'home');
+        document.getElementById('n-ai').classList.toggle('active', id === 'ai');
     }
 
-    function showP(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav div').forEach(n => n.classList.remove('active'));
-        document.getElementById('p-'+id).classList.add('active');
-        document.getElementById('n-'+id).classList.add('active');
+    function pay(plan) {
+        tg.HapticFeedback.impactOccurred('heavy');
+        tg.sendData(`pay_crypto_${plan}`);
     }
 
-    function openShop(plan) { selectedPlan = plan; document.getElementById('modal').style.display='flex'; }
-    
-    function confirmPay(m) {
-        tg.sendData(`pay_${m}_${selectedPlan}`);
-        document.getElementById('modal').style.display='none';
+    function sendAi() {
+        const m = document.getElementById('model').value;
+        const txt = document.getElementById('msg').value;
+        if(!txt) return;
+        tg.sendData(`ai:${m}|${txt}`);
+        tg.close();
     }
 
     function sendPromo() {
-        const val = document.getElementById('promo').value;
-        if(val) { tg.sendData("promo:" + val); document.getElementById('promo').value=''; }
+        const c = document.getElementById('promo').value;
+        tg.sendData("promo:" + c);
     }
 
-    function sendMsg() {
-        const val = document.getElementById('ai-msg').value;
-        if(!val) return;
-        const cb = document.getElementById('chat-box');
-        cb.innerHTML += `<p><b>Вы:</b> ${val}</p>`;
-        tg.sendData("msg:" + val);
-        document.getElementById('ai-msg').value = '';
-    }
+    const u = new URLSearchParams(window.location.search);
+    document.getElementById('bal').innerText = (u.get('bal') || 0) + ' VC';
+    document.getElementById('sub').innerText = (u.get('sub') || 'free').toUpperCase() + ' VERSION';
 </script>
 </body>
 </html>
-
 
 
 
