@@ -8,108 +8,104 @@
     <style>
         :root { --accent: #00f2ff; --bg: #000; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: #0a0a0a; padding-top: calc(env(safe-area-inset-top) + 10px); }
-        .page { flex: 1; overflow-y: auto; display: none; padding: 20px; padding-bottom: 100px; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; padding-top: calc(env(safe-area-inset-top) + 10px); }
+        .page { flex: 1; overflow-y: auto; display: none; padding: 20px; }
         .page.active { display: block; }
-        .card { background: #121214; border: 1px solid #333; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .card.active { border-color: var(--accent); }
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 14px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .btn-stars { background: #f9d71c; color: #000; }
-        .btn-crypto { background: var(--accent); color: #000; }
-        .nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
-        .nav i { font-size: 22px; color: #444; }
-        .nav i.active { color: var(--accent); }
-        .input-ui { position: fixed; bottom: 85px; width: 100%; padding: 0 15px; }
-        .input-inner { background: #1a1a1a; padding: 10px 15px; border-radius: 25px; border: 1px solid #333; display: flex; align-items: center; }
-        textarea { flex: 1; background: none; border: none; color: #fff; outline: none; height: 20px; resize: none; font-size: 16px; }
+        .card { background: #111; border: 1px solid #333; padding: 20px; border-radius: 18px; margin-bottom: 15px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; color: #000; }
+        .btn-stars { background: #f9d71c; }
+        .btn-crypto { background: var(--accent); }
+        .nav { height: 75px; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-i { font-size: 24px; color: #444; }
+        .nav-i.active { color: var(--accent); }
+        #input-zone { padding: 10px 15px; background: #000; padding-bottom: 20px; }
+        .input-bar { background: #1a1a1a; border-radius: 25px; display: flex; align-items: center; padding: 5px 15px; border: 1px solid #333; }
+        textarea { flex: 1; background: none; border: none; color: #fff; height: 24px; outline: none; resize: none; font-size: 16px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div style="font-weight:900">POULAI <span style="color:var(--accent)">TITAN</span></div>
-        <div style="background:var(--accent); color:#000; padding:4px 10px; border-radius:10px; font-weight:bold; font-size:12px;" id="bal">0 VC</div>
-    </div>
 
-    <div id="p-chat" class="page active">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div class="card active" onclick="setM('GPT-5', this)">GPT-5</div>
-            <div class="card" onclick="setM('SORA-2', this)">Sora 2</div>
-            <div class="card" onclick="setM('VEO-3', this)">Veo 3</div>
-            <div class="card" onclick="setM('MJ-V6', this)">MJ v6</div>
+<div class="header">
+    <div style="font-weight:900; letter-spacing:1px;">TITAN <span style="color:var(--accent)">OS</span></div>
+    <div id="bal" style="font-weight:bold; color:var(--accent)">0 VC</div>
+</div>
+
+<div id="p-chat" class="page active">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="card" style="padding:15px; text-align:center; border-color:var(--accent)"><b>GPT-5</b></div>
+        <div class="card" style="padding:15px; text-align:center;"><b>SORA 2</b></div>
+    </div>
+</div>
+
+<div id="p-shop" class="page">
+    <div class="card">
+        <div style="font-size:18px; font-weight:bold;">PRO ACCESS</div>
+        <div style="color:#666; font-size:13px; margin-top:5px;">GPT-5, Vision, Fast API</div>
+        <div class="btn-group">
+            <button class="btn btn-stars" onclick="sendPay('PRO', 'stars')">⭐ 140</button>
+            <button class="btn btn-crypto" onclick="sendPay('PRO', 'crypto')">USDT 14</button>
         </div>
     </div>
-
-    <div id="p-shop" class="page">
-        <div class="card" style="display:block">
-            <b>PRO ACCESS</b><br><small style="color:#666">GPT-5 + Files</small>
-            <div class="btn-row">
-                <div class="btn btn-stars" onclick="doPay('PRO','stars')">⭐ 140</div>
-                <div class="btn btn-crypto" onclick="doPay('PRO','crypto')">USDT 14</div>
-            </div>
-        </div>
-        <div class="card" style="display:block; border-color:gold">
-            <b style="color:gold">ULTRA TITAN</b><br><small style="color:#666">Sora 2 + Veo 3 + Genie</small>
-            <div class="btn-row">
-                <div class="btn btn-stars" onclick="doPay('ULTRA','stars')">⭐ 230</div>
-                <div class="btn btn-crypto" onclick="doPay('ULTRA','crypto')">USDT 23</div>
-            </div>
+    <div class="card" style="border-color: gold;">
+        <div style="font-size:18px; font-weight:bold; color:gold;">ULTRA TITAN</div>
+        <div style="color:#666; font-size:13px; margin-top:5px;">Sora 2, Veo 3, Genie S</div>
+        <div class="btn-group">
+            <button class="btn btn-stars" onclick="sendPay('ULTRA', 'stars')">⭐ 230</button>
+            <button class="btn btn-crypto" onclick="sendPay('ULTRA', 'crypto')">USDT 23</button>
         </div>
     </div>
+</div>
 
-    <div class="input-ui" id="ui-in">
-        <div class="input-inner">
-            <textarea id="txt" placeholder="Запрос..."></textarea>
-            <i class="fa-solid fa-paper-plane" style="color:var(--accent); margin-left:10px" onclick="doSend()"></i>
-        </div>
+<div id="input-zone">
+    <div class="input-bar">
+        <textarea id="prompt" placeholder="Введите запрос..."></textarea>
+        <i class="fa-solid fa-paper-plane" style="color:var(--accent); margin-left:10px;" onclick="sendAi()"></i>
     </div>
+</div>
 
-    <div class="nav">
-        <i class="fa-solid fa-terminal active" onclick="tab('chat',this)"></i>
-        <i class="fa-solid fa-cart-shopping" onclick="tab('shop',this)"></i>
-    </div>
+<div class="nav">
+    <i class="fa-solid fa-terminal nav-i active" onclick="tab('chat', this)"></i>
+    <i class="fa-solid fa-cart-shopping nav-i" onclick="tab('shop', this)"></i>
+</div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        let model = 'GPT-5';
+    function tab(name, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
+        document.getElementById('p-' + name).classList.add('active');
+        el.classList.add('active');
+        document.getElementById('input-zone').style.display = (name === 'chat' ? 'block' : 'none');
+    }
 
-        function tab(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav i').forEach(n => n.classList.remove('active'));
-            document.getElementById('p-'+id).classList.add('active');
-            el.classList.add('active');
-            document.getElementById('ui-in').style.display = (id === 'chat' ? 'block' : 'none');
-        }
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ
+    function sendPay(plan, method) {
+        tg.HapticFeedback.impactOccurred('medium');
+        const payload = JSON.stringify({
+            action: "payment",
+            plan: plan,
+            method: method
+        });
+        tg.sendData(payload); // Это закроет приложение
+    }
 
-        function setM(m, el) {
-            model = m;
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-        }
+    function sendAi() {
+        const text = document.getElementById('prompt').value;
+        if (!text) return;
+        tg.sendData(JSON.stringify({ action: "generate", prompt: text }));
+    }
 
-        function doPay(plan, method) {
-            tg.HapticFeedback.impactOccurred('medium');
-            const data = JSON.stringify({ action: "payment", method: method, plan: plan });
-            tg.sendData(data);
-            tg.close(); // СВОРАЧИВАЕМ СРАЗУ
-        }
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('bal').innerText = (params.get('bal') || 0) + ' VC';
+</script>
 
-        function doSend() {
-            const val = document.getElementById('txt').value;
-            if(!val) return;
-            tg.sendData(JSON.stringify({ action: "generate", model: model, prompt: val }));
-            tg.close();
-        }
-
-        const u = new URLSearchParams(window.location.search);
-        document.getElementById('bal').innerText = (u.get('bal') || 0) + ' VC';
-    </script>
 </body>
 </html>
+
 
 
 
