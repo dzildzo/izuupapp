@@ -7,85 +7,84 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --accent: #00f2ff; --bg: #000; --card: #121214; --brd: #222; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
         
-        body { 
-            margin: 0; background: var(--bg); color: #fff; 
-            font-family: -apple-system, system-ui, sans-serif; 
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        body { margin: 0; background: var(--bg); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* ЭФФЕКТ СТАРЫХ МОНИТОРОВ (SCANLINES) */
+        body::before {
+            content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 1000;
         }
 
-        /* ЗАСТАВКА ЗАГРУЗКИ (BOOT SCREEN) */
+        /* BOOT SCREEN */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease, visibility 0.5s;
+            background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .boot-logo { font-size: 28px; font-weight: 900; letter-spacing: 5px; margin-bottom: 20px; }
         .boot-logo span { color: var(--accent); text-shadow: 0 0 15px var(--accent); }
-        
-        .loader-bar { width: 200px; height: 2px; background: #111; position: relative; overflow: hidden; border-radius: 2px; }
-        .loader-fill { 
-            position: absolute; top: 0; left: 0; height: 100%; width: 0%; 
-            background: var(--accent); box-shadow: 0 0 10px var(--accent);
-            animation: loadProgress 2.2s forwards cubic-bezier(0.42, 0, 0.58, 1);
-        }
-        .boot-status { margin-top: 15px; font-family: monospace; font-size: 10px; color: var(--accent); opacity: 0.7; text-transform: uppercase; }
-
-        @keyframes loadProgress { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
+        .loader-bar { width: 200px; height: 2px; background: #111; overflow: hidden; border-radius: 2px; }
+        .loader-fill { height: 100%; width: 0%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: load 2s forwards; }
+        @keyframes load { to { width: 100%; } }
 
         /* HEADER */
         .header { 
-            padding: 15px 20px; border-bottom: 1px solid var(--brd); 
-            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 20px; border-bottom: 1px solid var(--brd); display: flex; justify-content: space-between; align-items: center; 
             background: #0a0a0a; padding-top: calc(env(safe-area-inset-top) + 10px);
-            flex-shrink: 0;
         }
 
-        /* CONTENT AREA */
-        .content { flex-grow: 1; overflow-y: auto; padding: 15px; padding-bottom: 160px; }
-        .page { display: none; } 
-        .page.active { display: block; animation: fadeIn 0.4s ease; }
-
+        /* CONTENT */
+        .content { flex-grow: 1; overflow-y: auto; padding: 15px; padding-bottom: 180px; }
+        .page { display: none; } .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* GRID SYSTEM */
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .m-card { 
-            background: var(--card); border: 1px solid var(--brd); 
-            padding: 18px 10px; border-radius: 18px; text-align: center; 
-            transition: 0.2s; height: 100px; display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
+        /* MINING CARD */
+        .mine-card {
+            background: linear-gradient(45deg, #111, #1a1a1e); border: 1px solid var(--brd);
+            border-radius: 20px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
         }
-        .m-card.active { border-color: var(--accent); background: rgba(0,242,255,0.05); box-shadow: 0 0 15px rgba(0,242,255,0.05); }
-        .m-card i { font-size: 22px; margin-bottom: 8px; color: #444; }
-        .m-card.active i { color: var(--accent); }
-        .m-card b { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .mine-info b { display: block; font-size: 14px; color: var(--accent); }
+        .mine-info span { font-size: 11px; color: #666; }
+        .mine-btn { 
+            background: var(--accent); color: #000; border: none; padding: 10px 15px; border-radius: 12px; 
+            font-weight: 900; font-size: 12px; cursor: pointer; transition: 0.3s;
+        }
+        .mine-btn:disabled { background: #222; color: #555; }
 
-        /* SHOP BOXES */
+        /* LOGS */
+        .sys-logs { font-family: monospace; font-size: 9px; color: var(--accent); opacity: 0.5; margin-bottom: 10px; height: 12px; overflow: hidden; }
+
+        /* GRID */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .m-card { 
+            background: var(--card); border: 1px solid var(--brd); padding: 18px 10px; border-radius: 18px; 
+            text-align: center; height: 90px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .m-card.active { border-color: var(--accent); background: rgba(0,242,255,0.05); }
+        .m-card i { font-size: 20px; margin-bottom: 5px; color: #444; }
+        .m-card.active i { color: var(--accent); }
+        .m-card b { font-size: 11px; text-transform: uppercase; }
+
+        /* SHOP */
         .shop-box { background: var(--card); border: 1px solid var(--brd); border-radius: 20px; padding: 20px; margin-bottom: 12px; }
-        .shop-box.ultra { border-color: gold; box-shadow: 0 0 15px rgba(255, 215, 0, 0.05); }
+        .shop-box.ultra { border-color: gold; }
         .btn-row { display: flex; gap: 8px; margin-top: 15px; }
-        .btn { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 800; font-size: 13px; cursor: pointer; }
+        .btn { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 800; font-size: 13px; }
         .btn-s { background: #f9d71c; color: #000; }
         .btn-c { background: var(--accent); color: #000; }
 
-        /* INPUT AREA */
-        .input-zone { 
-            position: fixed; bottom: 85px; width: 100%; padding: 0 15px;
-            background: linear-gradient(0deg, var(--bg) 60%, transparent);
-            padding-bottom: 10px;
-        }
+        /* INPUT */
+        .input-zone { position: fixed; bottom: 85px; width: 100%; padding: 0 15px; }
         .input-bar { background: #1a1a1e; border: 1px solid var(--brd); border-radius: 25px; padding: 8px 15px; display: flex; align-items: center; }
         textarea { flex: 1; background: none; border: none; color: #fff; height: 24px; outline: none; resize: none; font-size: 16px; }
 
         /* NAV */
         .nav { 
-            position: fixed; bottom: 0; width: 100%; height: 75px; 
-            background: #0a0a0a; border-top: 1px solid var(--brd); 
-            display: flex; justify-content: space-around; align-items: center;
-            padding-bottom: env(safe-area-inset-bottom);
+            position: fixed; bottom: 0; width: 100%; height: 75px; background: #0a0a0a; border-top: 1px solid var(--brd); 
+            display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom);
         }
         .nav i { font-size: 22px; color: #444; padding: 10px 20px; }
         .nav i.active { color: var(--accent); }
@@ -95,19 +94,27 @@
 
     <div id="loading-screen">
         <div class="boot-logo">TITAN<span>OS</span></div>
-        <div class="loader-bar">
-            <div class="loader-fill"></div>
-        </div>
-        <div class="boot-status" id="boot-text">INITIALIZING CORE...</div>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
     </div>
 
     <div class="header">
-        <div style="font-weight:900; font-size: 18px;">TITAN <span style="color:var(--accent)">OS</span></div>
-        <div id="bal" style="background:var(--accent); color:#000; padding:4px 12px; border-radius:12px; font-weight:800; font-size:12px;">100 VC</div>
+        <div style="font-weight:900; letter-spacing:1px;">TITAN <span style="color:var(--accent)">OS</span></div>
+        <div id="bal" style="background:var(--accent); color:#000; padding:4px 12px; border-radius:12px; font-weight:900; font-size:12px;">100 VC</div>
     </div>
 
     <div class="content">
         <div id="p-chat" class="page active">
+            
+            <div class="mine-card">
+                <div class="mine-info">
+                    <b id="mine-status">TITAN MINER: READY</b>
+                    <span id="mine-timer">Доступно: +1.00 VC</span>
+                </div>
+                <button class="mine-btn" id="mine-btn" onclick="startMining()">COLLECT</button>
+            </div>
+
+            <div class="sys-logs" id="logs">RUNNING SYSTEM_CORE... CHECKING NEURAL LINKS...</div>
+
             <div class="grid">
                 <div class="m-card active" onclick="setM('GPT-5', this)"><i class="fa-solid fa-brain"></i><b>GPT-5</b></div>
                 <div class="m-card" onclick="setM('CLAUDE-3.5', this)"><i class="fa-solid fa-code"></i><b>Claude 3.5</b></div>
@@ -121,7 +128,6 @@
         <div id="p-shop" class="page">
             <div class="shop-box">
                 <b style="font-size:16px;">PRO ACCESS</b>
-                <p style="color:#666; font-size:12px; margin: 5px 0;">Все нейросети + работа с файлами</p>
                 <div class="btn-row">
                     <button class="btn btn-s" onclick="pay('PRO','stars')">⭐ 140</button>
                     <button class="btn btn-c" onclick="pay('PRO','crypto')">USDT 14</button>
@@ -129,7 +135,6 @@
             </div>
             <div class="shop-box ultra">
                 <b style="font-size:16px; color:gold">ULTRA TITAN</b>
-                <p style="color:#666; font-size:12px; margin: 5px 0;">Sora 2 + Veo 3 + Рендеринг</p>
                 <div class="btn-row">
                     <button class="btn btn-s" onclick="pay('ULTRA','stars')">⭐ 230</button>
                     <button class="btn btn-c" onclick="pay('ULTRA','crypto')">USDT 23</button>
@@ -140,9 +145,8 @@
 
     <div class="input-zone" id="in-z">
         <div class="input-bar">
-            <i class="fa-solid fa-paperclip" style="color:#444; margin-right:12px; font-size:18px" onclick="tg.showAlert('Скрепка активна. Пришлите файл в чат.')"></i>
             <textarea id="txt" placeholder="Командная строка..."></textarea>
-            <i class="fa-solid fa-arrow-up" style="color:var(--accent); margin-left:12px; font-size:18px" onclick="send()"></i>
+            <i class="fa-solid fa-arrow-up" style="color:var(--accent); margin-left:12px;" onclick="send()"></i>
         </div>
     </div>
 
@@ -154,20 +158,53 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        let currentBal = 100;
         let model = 'GPT-5';
 
-        // ЛОГИКА ЗАСТАВКИ
-        window.addEventListener('load', () => {
-            const status = document.getElementById('boot-text');
-            setTimeout(() => { status.innerText = "CONNECTING TO TITAN CLOUD..."; }, 800);
-            setTimeout(() => { status.innerText = "ACCESS GRANTED."; }, 1600);
+        // ЛОГИ СИСТЕМЫ
+        const logLines = [
+            "ENCRYPTING CONNECTION...", "PULLING DATA FROM GPT-5...", "SYNCING NEURAL NETWORKS...",
+            "BYPASSING FIREWALL...", "TITAN CORE ACTIVE.", "UPLOADING TO CLOUD...", "READY ДЛЯ ЗАПРОСА."
+        ];
+        setInterval(() => {
+            document.getElementById('logs').innerText = logLines[Math.floor(Math.random() * logLines.length)];
+        }, 3000);
+
+        // МАЙНИНГ
+        function startMining() {
+            tg.HapticFeedback.notificationOccurred('success');
+            currentBal += 1;
+            document.getElementById('bal').innerText = currentBal + ' VC';
             
+            const btn = document.getElementById('mine-btn');
+            const timer = document.getElementById('mine-timer');
+            const status = document.getElementById('mine-status');
+            
+            btn.disabled = true;
+            status.innerText = "MINING IN PROGRESS...";
+            
+            let timeLeft = 3600; // 1 час
+            const interval = setInterval(() => {
+                timeLeft--;
+                let mins = Math.floor(timeLeft / 60);
+                let secs = timeLeft % 60;
+                timer.innerText = `Следующий сбор через: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    btn.disabled = false;
+                    timer.innerText = "Доступно: +1.00 VC";
+                    status.innerText = "TITAN MINER: READY";
+                }
+            }, 1000);
+        }
+
+        // ЗАГРУЗКА
+        window.onload = () => {
             setTimeout(() => {
-                const screen = document.getElementById('loading-screen');
-                screen.style.opacity = '0';
-                setTimeout(() => { screen.style.visibility = 'hidden'; }, 500);
-            }, 2300);
-        });
+                document.getElementById('loading-screen').style.display = 'none';
+            }, 2200);
+        };
 
         function tab(id, el) {
             tg.HapticFeedback.impactOccurred('light');
@@ -196,12 +233,10 @@
             tg.sendData(JSON.stringify({ action:"generate", model:model, prompt:val }));
             tg.close();
         }
-
-        const u = new URLSearchParams(window.location.search);
-        document.getElementById('bal').innerText = (u.get('bal') || 100) + ' VC';
     </script>
 </body>
 </html>
+
 
 
 
