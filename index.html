@@ -7,151 +7,65 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root {
-            --bg: #0a0a0c;
-            --card: #161618;
-            --accent: #00d2ff;
-            --accent-grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-            --text: #ffffff;
-            --text-dim: #888;
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --bg: #0a0a0c; --card: #161618; --accent: #00d2ff; --text: #ffffff; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; }
-
-        /* Страницы */
         .page { display: none; height: 100vh; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        .page.active { display: flex; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Шапка */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .brand { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
-        .brand span { color: var(--accent); }
-
-        /* Баланс */
-        .balance-card {
-            background: var(--accent-grad);
-            border-radius: 24px; padding: 25px; text-align: center;
-            box-shadow: 0 10px 25px rgba(0, 210, 255, 0.2);
-            margin-bottom: 20px;
+        .page.active { display: flex; }
+        
+        /* Заглушка для чата */
+        #chat-lock {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 80px;
+            background: rgba(10,10,12,0.9); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; text-align: center; padding: 20px;
         }
 
-        /* Чат */
+        .balance-card { background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); border-radius: 24px; padding: 25px; text-align: center; margin-bottom: 20px; }
+        .list-btn { background: var(--card); border: 1px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 18px; width: 100%; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        
         #chat-window { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 140px; }
-        .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.4; }
-        .ai { align-self: flex-start; background: var(--card); border: 1px solid rgba(255,255,255,0.05); }
-        .user { align-self: flex-end; background: var(--accent-grad); }
-
-        /* Селектор нейронок */
-        .model-picker { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
-        .model-chip { 
-            padding: 8px 16px; background: var(--card); border-radius: 12px; 
-            font-size: 12px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .model-chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
-
-        /* Ввод сообщения */
-        .input-bar {
-            position: fixed; bottom: 85px; left: 15px; right: 15px;
-            background: #1c1c1e; border-radius: 20px; padding: 8px 15px;
-            display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .input-bar input { background: transparent; border: none; color: white; flex-grow: 1; outline: none; font-size: 15px; }
-        .input-bar i { color: var(--accent); font-size: 20px; cursor: pointer; }
-
-        /* Кнопки оплаты и магазина */
-        .list-btn {
-            background: var(--card); border: 1px solid rgba(255,255,255,0.05);
-            padding: 18px; border-radius: 18px; width: 100%; color: white;
-            display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
-            transition: 0.2s;
-        }
-        .list-btn:active { transform: scale(0.98); background: rgba(255,255,255,0.1); }
-        .list-btn .info { display: flex; align-items: center; gap: 15px; }
-        .list-btn i { font-size: 20px; color: var(--accent); }
-        .price { background: #fff; color: #000; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 12px; }
-
-        /* Навигация */
-        .nav {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(10px);
-            display: flex; justify-content: space-around; padding: 15px 0 25px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .nav i { color: var(--text-dim); font-size: 22px; transition: 0.3s; }
-        .nav i.active { color: var(--accent); transform: translateY(-3px); }
-
+        .input-bar { position: fixed; bottom: 85px; left: 15px; right: 15px; background: #1c1c1e; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; gap: 12px; }
+        input { background: transparent; border: none; color: white; flex-grow: 1; outline: none; }
+        
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; display: flex; justify-content: space-around; padding: 15px 0 25px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav i { color: #555; font-size: 22px; }
+        .nav i.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div id="p-home" class="page active">
-        <div class="header">
-            <div class="brand">IZUUP<span>AI</span></div>
-            <i class="fa-solid fa-user-circle" style="font-size: 24px;" onclick="showP('profile')"></i>
-        </div>
         <div class="balance-card">
-            <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;">Ваш баланс</div>
             <div style="font-size: 38px; font-weight: 900;" id="user-bal">1,200 VC</div>
+            <div id="sub-label">Статус: Без подписки</div>
         </div>
-        <div class="section-title" style="margin-bottom:15px; font-weight:700;">Быстрые действия</div>
-        <button class="list-btn" onclick="showP('chat')">
-            <div class="info"><i class="fa-solid fa-robot"></i> <b>Открыть AI Чат</b></div>
-            <i class="fa-solid fa-chevron-right" style="font-size:14px; opacity:0.3;"></i>
-        </button>
-        <button class="list-btn" onclick="showP('shop')">
-            <div class="info"><i class="fa-solid fa-gem"></i> <b>Купить подписку</b></div>
-            <i class="fa-solid fa-chevron-right" style="font-size:14px; opacity:0.3;"></i>
-        </button>
+        <button class="list-btn" onclick="showP('chat')"><b>Открыть AI Чат</b> <i class="fa-solid fa-comment"></i></button>
+        <button class="list-btn" onclick="showP('shop')"><b>Магазин (ULTIMATE)</b> <i class="fa-solid fa-shop"></i></button>
     </div>
 
     <div id="p-chat" class="page">
-        <div class="header">
-            <div class="back" onclick="showP('home')"><i class="fa-solid fa-arrow-left"></i></div>
-            <div style="font-weight:700;">Интеллект Чат</div>
-            <div style="width:20px;"></div>
+        <div id="chat-lock">
+            <i class="fa-solid fa-lock" style="font-size: 40px; color: var(--accent); margin-bottom: 15px;"></i>
+            <h3>Чат заблокирован</h3>
+            <p style="color: #888;">Для доступа к Gemini, Claude и Genie купите подписку в магазине.</p>
+            <button class="list-btn" style="background: var(--accent); color: #000;" onclick="showP('shop')">Перейти в магазин</button>
         </div>
-        <div class="model-picker">
-            <div class="model-chip active" onclick="selM(this)">Gemini 1.5 Pro</div>
-            <div class="model-chip" onclick="selM(this)">Claude 3.5 Sonnet</div>
-            <div class="model-chip" onclick="selM(this)">Google Genie</div>
-        </div>
-        <div id="chat-window">
-            <div class="msg ai">Привет! Я — IZUUP AI. Какую модель протестируем? Я поддерживаю работу с файлами и кодом.</div>
-        </div>
+        <div id="chat-window"></div>
         <div class="input-bar">
-            <label for="file-up"><i class="fa-solid fa-paperclip"></i></label>
-            <input type="file" id="file-up" style="display:none" onchange="fileUp()">
-            <input type="text" id="chat-input" placeholder="Введите ваш запрос...">
-            <i class="fa-solid fa-paper-plane" onclick="sendMsg()"></i>
+            <input type="text" placeholder="Спросите ИИ...">
+            <i class="fa-solid fa-paper-plane"></i>
         </div>
     </div>
 
     <div id="p-shop" class="page">
-        <div class="header">
-            <div class="back" onclick="showP('home')"><i class="fa-solid fa-arrow-left"></i></div>
-            <div style="font-weight:700;">Магазин</div>
-            <div style="width:20px;"></div>
-        </div>
-        <button class="list-btn" onclick="act('buy_basic')">
-            <div class="info"><i class="fa-solid fa-font"></i> <b>Gemini Basic</b></div>
-            <div class="price">1200 VC</div>
+        <h2>Магазин</h2>
+        <button class="list-btn" onclick="act('buy_ultimate')">
+            <span>Все нейросети (ULTIMATE)</span>
+            <b style="background:#fff; color:#000; padding:4px 8px; border-radius:5px;">2300 VC</b>
         </button>
-        <button class="list-btn" style="border-color: var(--accent);" onclick="act('buy_ultimate')">
-            <div class="info"><i class="fa-solid fa-layer-group"></i> <b>Все нейросети (ULTIMATE)</b></div>
-            <div class="price" style="background:var(--accent-grad); color:white;">2300 VC</div>
-        </button>
-        
-        <h3 style="margin: 20px 0 15px;">Пополнение баланса</h3>
-        <button class="list-btn" onclick="act('pay_stars')">
-            <div class="info"><i class="fa-solid fa-star" style="color:gold;"></i> <b>Telegram Stars</b></div>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-        <button class="list-btn" onclick="act('pay_crypto')">
-            <div class="info"><i class="fa-solid fa-coins" style="color:#00ff88;"></i> <b>Crypto Bot</b></div>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
+        <h3>Пополнение баланса</h3>
+        <button class="list-btn" onclick="act('pay_stars')"><i class="fa-solid fa-star" style="color:gold;"></i> Stars</button>
+        <button class="list-btn" onclick="act('pay_crypto')"><i class="fa-solid fa-coins" style="color:#00ff88;"></i> Crypto Bot</button>
     </div>
 
     <div class="nav">
@@ -163,53 +77,29 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#0a0a0c');
 
-        // Переключение страниц
+        // Имитация данных (в реальности нужно получать из БД бота)
+        let hasPremium = false; 
+
         function showP(id) {
-            tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
             
-            // Активные иконки
-            document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-            const navMap = { 'home': 0, 'chat': 1, 'shop': 2 };
-            document.querySelectorAll('.nav i')[navMap[id]].classList.add('active');
+            // Если зашли в чат и есть преимум - убираем замок
+            if (id === 'chat' && hasPremium) {
+                document.getElementById('chat-lock').style.display = 'none';
+            }
         }
 
-        // Выбор нейронки
-        function selM(el) {
-            tg.HapticFeedback.selectionChanged();
-            document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        // Отправка данных боту (ИСПОЛЬЗУЕМ ДЛЯ ОПЛАТЫ И ПОКУПКИ)
-        function act(data) {
+        function act(cmd) {
             tg.HapticFeedback.notificationOccurred('success');
-            tg.sendData(data); // Отправляем строку боту
-            tg.close(); // Закрываем апку, чтобы бот выслал ответ
+            // ВАЖНО: Мы используем MainButton для отправки, так как sendData может блокироваться
+            tg.sendData(cmd);
+            tg.close();
         }
 
-        // Имитация чата
-        function sendMsg() {
-            const inp = document.getElementById('chat-input');
-            if(!inp.value) return;
-            const win = document.getElementById('chat-window');
-            win.innerHTML += `<div class="msg user">${inp.value}</div>`;
-            inp.value = "";
-            win.scrollTo(0, win.scrollHeight);
-            tg.HapticFeedback.impactOccurred('medium');
-        }
-
-        function fileUp() {
-            tg.showConfirm("Вы хотите загрузить этот файл для анализа ИИ?");
-        }
-
-        // Подгружаем имя
-        if(tg.initDataUnsafe.user) {
-            console.log("User detected: " + tg.initDataUnsafe.user.first_name);
-        }
+        // Если бот передал нам, что юзер премиум (через initData)
+        // Здесь можно добавить логику проверки
     </script>
 </body>
 </html>
