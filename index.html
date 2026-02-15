@@ -3,217 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IZUUP OS 26</title>
+    <title>IZUUP AI ULTIMATE</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root {
-            --ios-bg: #000000;
-            --ios-card: rgba(28, 28, 30, 0.7);
-            --ios-accent: #007AFF;
-            --ios-text: #ffffff;
-            --glass: blur(20px) saturate(180%);
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --bg: #0a0a0c; --card: #161618; --accent: #00d2ff; --text: #fff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--ios-bg);
-            color: var(--ios-text);
-            margin: 0; padding: 0;
-            overflow: hidden;
-            background-image: radial-gradient(circle at top right, #1a2a6c, #b21f1f00), radial-gradient(circle at bottom left, #004e92, #000000);
-            height: 100vh;
+        .page { display: none; height: 100vh; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        .page.active { display: flex; }
+
+        /* Баланс */
+        .balance-card { 
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); 
+            border-radius: 24px; padding: 25px; text-align: center; margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
         }
 
-        /* Dynamic Island */
-        .dynamic-island {
-            width: 120px; height: 35px;
-            background: #000; border-radius: 20px;
-            margin: 10px auto;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 12px; font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.1);
+        /* Кнопки */
+        .btn { 
+            background: var(--card); border: 1px solid rgba(255,255,255,0.05); 
+            padding: 18px; border-radius: 18px; width: 100%; color: white; 
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+            cursor: pointer;
         }
-        .dynamic-island:hover { width: 200px; }
-
-        .page { display: none; height: calc(100vh - 100px); flex-direction: column; padding: 20px; overflow-y: auto; }
-        .page.active { display: flex; animation: ios-slide 0.4s ease; }
-        @keyframes ios-slide { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-        /* Карточки */
-        .ios-card {
-            background: var(--ios-card);
-            backdrop-filter: var(--glass);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .balance-h1 { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
-
-        /* Кнопки в стиле iOS */
-        .ios-btn {
-            background: var(--ios-card);
-            backdrop-filter: var(--glass);
-            border: none; border-radius: 16px;
-            padding: 16px; width: 100%;
-            color: white; font-size: 17px; font-weight: 600;
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 10px;
-            transition: 0.2s;
-        }
-        .ios-btn:active { transform: scale(0.97); background: rgba(255,255,255,0.15); }
-        .ios-btn.primary { background: var(--ios-accent); }
+        .btn:active { transform: scale(0.98); background: #222; }
 
         /* Чат */
-        #chat-scroller { flex-grow: 1; overflow-y: auto; padding-bottom: 20px; }
-        .bubble { 
-            max-width: 80%; padding: 12px 16px; border-radius: 20px; 
-            margin-bottom: 10px; font-size: 15px; line-height: 1.4;
-        }
-        .bubble.user { align-self: flex-end; background: var(--ios-accent); color: white; border-bottom-right-radius: 4px; }
-        .bubble.ai { align-self: flex-start; background: #3a3a3c; border-bottom-left-radius: 4px; }
+        #chat-window { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 140px; }
+        .msg { padding: 12px; border-radius: 15px; max-width: 80%; font-size: 14px; }
+        .ai { background: var(--card); align-self: flex-start; border: 1px solid #333; }
+        .user { background: var(--accent); color: #000; align-self: flex-end; font-weight: 500; }
 
-        .chat-input-container {
-            position: fixed; bottom: 90px; left: 15px; right: 15px;
-            background: rgba(44, 44, 46, 0.8);
-            backdrop-filter: var(--glass);
-            border-radius: 25px; padding: 8px 15px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .chat-input-container input { background: transparent; border: none; color: white; flex: 1; height: 35px; outline: none; }
-
-        /* Нижняя навигация */
-        .tab-bar {
-            position: fixed; bottom: 0; width: 100%; height: 85px;
-            background: rgba(20, 20, 20, 0.8); backdrop-filter: var(--glass);
-            display: flex; justify-content: space-around; align-items: flex-start;
-            padding-top: 15px; border-top: 0.5px solid rgba(255,255,255,0.1);
-        }
-        .tab-item { display: flex; flex-direction: column; align-items: center; color: #8e8e93; font-size: 10px; text-decoration: none; }
-        .tab-item.active { color: var(--ios-accent); }
-        .tab-item i { font-size: 23px; margin-bottom: 4px; }
+        /* Выбор нейронки */
+        .ai-selector { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
+        .chip { padding: 6px 12px; background: #222; border-radius: 10px; font-size: 12px; border: 1px solid #333; white-space: nowrap; }
+        .chip.active { border-color: var(--accent); color: var(--accent); }
 
         /* Замок */
-        #lock-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
-            z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 30px;
+        .lock-overlay { 
+            position: absolute; top:0; left:0; width:100%; height:100%; 
+            background: rgba(10,10,12,0.98); display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
         }
+
+        /* Поле ввода */
+        .input-bar { 
+            position: fixed; bottom: 85px; left: 15px; right: 15px; 
+            background: #1c1c1e; border-radius: 20px; padding: 10px 15px; 
+            display: flex; align-items: center; gap: 10px; border: 1px solid #333;
+        }
+        input { background: transparent; border: none; color: white; flex: 1; outline: none; }
+
+        /* Навигация */
+        .nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; 
+            display: flex; justify-content: space-around; padding: 15px 0 25px; 
+            border-top: 1px solid #222; 
+        }
+        .nav i { color: #555; font-size: 22px; }
+        .nav i.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <div class="dynamic-island" id="island">IZUUP AI</div>
-
     <div id="p-home" class="page active">
-        <div class="ios-card">
-            <span style="opacity: 0.6; font-weight: 600;">Wallet Balance</span>
-            <h1 class="balance-h1" id="bal-view">0 VC</h1>
-            <div id="sub-badge" style="display:inline-block; padding: 4px 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 12px;">Free Tier</div>
+        <div class="balance-card">
+            <h1 id="bal-val">0 VC</h1>
+            <p style="margin:0; opacity:0.8;">Доступные средства</p>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div class="ios-card" onclick="showP('chat')" style="margin:0; text-align: center;">
-                <i class="fa-solid fa-comment-dots" style="font-size: 28px; color: var(--ios-accent); margin-bottom: 10px;"></i>
-                <div style="font-weight: 600;">Neural Chat</div>
-            </div>
-            <div class="ios-card" onclick="showP('shop')" style="margin:0; text-align: center;">
-                <i class="fa-solid fa-bolt" style="font-size: 28px; color: #FFD60A; margin-bottom: 10px;"></i>
-                <div style="font-weight: 600;">Store</div>
-            </div>
-        </div>
+        <button class="btn" onclick="showP('chat')"><span>Интеллектуальный чат</span> <i class="fa-solid fa-comment-dots"></i></button>
+        <button class="btn" onclick="showP('shop')"><span>Магазин подписок</span> <i class="fa-solid fa-bag-shopping"></i></button>
     </div>
 
     <div id="p-chat" class="page">
-        <div id="lock-screen">
-            <i class="fa-solid fa-face-id" style="font-size: 60px; margin-bottom: 20px; color: var(--ios-accent);"></i>
-            <h2>Subscription Required</h2>
-            <p style="opacity:0.7;">Чат с Gemini Pro, Claude 3 и Genie доступен только для Ultimate пользователей.</p>
-            <button class="ios-btn primary" onclick="showP('shop')" style="justify-content: center;">Upgrade Now</button>
-        </div>
-        
-        <div id="chat-scroller" style="display: flex; flex-direction: column;">
-            <div class="bubble ai">Система IZUUP готова. О чем хотите спросить?</div>
+        <div id="lock" class="lock-overlay">
+            <i class="fa-solid fa-shield-halved" style="font-size: 50px; color: var(--accent); margin-bottom: 20px;"></i>
+            <h2>Доступ закрыт</h2>
+            <p style="color:#888; margin-bottom:20px;">Claude 3.5, Gemini Pro и Google Genie доступны только в подписке ULTIMATE.</p>
+            <button class="btn" style="background: var(--accent); color: #000; justify-content: center; font-weight: bold;" onclick="showP('shop')">КУПИТЬ ULTIMATE</button>
         </div>
 
-        <div class="chat-input-container">
-            <i class="fa-solid fa-plus" style="opacity: 0.6;"></i>
-            <input type="text" id="chat-inp" placeholder="Message...">
-            <i class="fa-solid fa-arrow-up-circle" style="font-size: 28px; color: var(--ios-accent);" onclick="sendMsg()"></i>
+        <div class="ai-selector">
+            <div class="chip active">Gemini 1.5</div>
+            <div class="chip">Claude 3.5</div>
+            <div class="chip">Google Genie</div>
+        </div>
+
+        <div id="chat-window">
+            <div class="msg ai">Система готова. Какой запрос проанализировать?</div>
+        </div>
+
+        <div class="input-bar">
+            <label for="f-up"><i class="fa-solid fa-paperclip"></i></label>
+            <input type="file" id="f-up" style="display:none">
+            <input type="text" id="chat-inp" placeholder="Спросить нейросеть...">
+            <i class="fa-solid fa-paper-plane" style="color: var(--accent);" onclick="sendLocal()"></i>
         </div>
     </div>
 
     <div id="p-shop" class="page">
-        <h2 style="font-size: 30px; letter-spacing: -1px;">Store</h2>
-        <div class="ios-card" style="background: linear-gradient(135deg, #007AFF, #5856D6); border: none;">
-            <h3 style="margin:0;">ULTIMATE PASS</h3>
-            <p style="font-size: 13px; opacity: 0.9;">Доступ ко всем нейросетям, генерации видео и работе с файлами.</p>
-            <button class="ios-btn" style="background: white; color: black; margin-top: 10px;" onclick="act('buy_ultimate')">
-                <b>Buy Pass</b> <span>2300 VC</span>
-            </button>
+        <h2 style="margin-bottom: 20px;">Магазин</h2>
+        <div class="btn" onclick="sendToBot('buy_ultimate')" style="border: 1px solid var(--accent);">
+            <div>
+                <b style="color: var(--accent);">Все нейросети (ULTIMATE)</b><br>
+                <small style="opacity:0.6;">Полный доступ без лимитов</small>
+            </div>
+            <b style="background: #fff; color: #000; padding: 5px 10px; border-radius: 8px;">2300 VC</b>
         </div>
 
-        <p style="font-weight: 600; margin: 20px 0 10px 5px; opacity: 0.5;">TOP UP BALANCE</p>
-        <button class="ios-btn" onclick="act('pay_stars')"><span>Telegram Stars</span> <i class="fa-solid fa-star" style="color:#FFD60A;"></i></button>
-        <button class="ios-btn" onclick="act('pay_crypto')"><span>Crypto Pay</span> <i class="fa-solid fa-coins" style="color:#30D158;"></i></button>
+        <h3 style="margin: 25px 0 15px;">Пополнение баланса</h3>
+        <button class="btn" onclick="sendToBot('pay_stars')">
+            <span>Telegram Stars</span> <i class="fa-solid fa-star" style="color:gold;"></i>
+        </button>
+        <button class="btn" onclick="sendToBot('pay_crypto')">
+            <span>Crypto Pay (USDT)</span> <i class="fa-solid fa-coins" style="color:#00ff88;"></i>
+        </button>
     </div>
 
-    <div class="tab-bar">
-        <div class="tab-item active" onclick="showP('home')"><i class="fa-solid fa-house"></i><span>Home</span></div>
-        <div class="tab-item" onclick="showP('chat')"><i class="fa-solid fa-message"></i><span>Chat</span></div>
-        <div class="tab-item" onclick="showP('shop')"><i class="fa-solid fa-bag-shopping"></i><span>Store</span></div>
+    <div class="nav">
+        <i class="fa-solid fa-house active" onclick="showP('home')"></i>
+        <i class="fa-solid fa-comment" onclick="showP('chat')"></i>
+        <i class="fa-solid fa-wallet" onclick="showP('shop')"></i>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation();
+        tg.ready(); // Критически важно для работы sendData
 
-        // Параметры из ссылки
+        // Получаем данные от бота
         const params = new URLSearchParams(window.location.search);
         const sub = params.get('sub');
         const bal = params.get('bal');
 
-        if(bal) document.getElementById('bal-view').innerText = bal + ' VC';
-        if(sub === 'ultimate') {
-            document.getElementById('lock-screen').style.display = 'none';
-            document.getElementById('sub-badge').innerText = 'Ultimate Plan';
-            document.getElementById('island').innerText = 'ULTIMATE';
-            document.getElementById('island').style.color = '#007AFF';
-        }
+        if(bal) document.getElementById('bal-val').innerText = bal + ' VC';
+        if(sub === 'ultimate') document.getElementById('lock').style.display = 'none';
 
         function showP(id) {
-            tg.HapticFeedback.impactOccurred('medium');
+            tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
             
-            document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
             const idx = id === 'home' ? 0 : id === 'chat' ? 1 : 2;
-            document.querySelectorAll('.tab-item')[idx].classList.add('active');
+            document.querySelectorAll('.nav i')[idx].classList.add('active');
         }
 
-        function act(data) {
+        // ГЛАВНАЯ ФУНКЦИЯ ОТПРАВКИ (ОПЛАТА)
+        function sendToBot(command) {
             tg.HapticFeedback.notificationOccurred('success');
-            tg.sendData(data);
-            tg.close();
+            // Это отправит текст боту и закроет приложение
+            tg.sendData(command); 
         }
 
-        function sendMsg() {
+        function sendLocal() {
             const inp = document.getElementById('chat-inp');
             if(!inp.value) return;
-            const scroller = document.getElementById('chat-scroller');
-            scroller.innerHTML += `<div class="bubble user">${inp.value}</div>`;
+            const win = document.getElementById('chat-window');
+            win.innerHTML += `<div class="msg user">${inp.value}</div>`;
             inp.value = "";
-            tg.HapticFeedback.impactOccurred('light');
-            scroller.scrollTo(0, scroller.scrollHeight);
+            win.scrollTo(0, win.scrollHeight);
+            tg.HapticFeedback.impactOccurred('medium');
         }
     </script>
 </body>
 </html>
+
 
