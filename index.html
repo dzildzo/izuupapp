@@ -1,80 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --bg: #0a0a0c; --card: #161618; --accent: #007AFF; --text: #fff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; overflow: hidden; }
+        :root { --bg: #050505; --card: #121214; --accent: #00d2ff; --grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; overflow: hidden; }
+        
         .page { display: none; height: 100vh; flex-direction: column; }
-        .active { display: flex; }
-        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; text-align: center; }
-        .btn { background: var(--accent); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; font-size: 16px; font-weight: 600; margin-bottom: 10px; cursor: pointer; }
-        .btn-gray { background: #2c2c2e; }
-        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; display: flex; justify-content: space-around; padding: 15px 0 30px; border-top: 1px solid #222; }
-        .nav i { color: #555; font-size: 22px; }
-        .nav i.active { color: var(--accent); }
-        input { background: #1c1c1e; border: 1px solid #444; color: white; padding: 12px; border-radius: 12px; flex: 1; outline: none; }
-        #chat-win { flex-grow: 1; overflow-y: auto; padding-bottom: 120px; text-align: left; }
+        .active { display: flex; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .balance-card { 
+            background: var(--grad); border-radius: 25px; padding: 30px; 
+            text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3);
+        }
+        
+        .btn { 
+            background: var(--card); border: 1px solid #222; padding: 18px; 
+            border-radius: 20px; width: 100%; color: white; font-weight: 600; 
+            margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .btn i { color: var(--accent); }
+
+        .nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.8);
+            backdrop-filter: blur(10px); display: flex; justify-content: space-around; 
+            padding: 20px 0 35px; border-top: 1px solid #222; 
+        }
+        .nav i { color: #444; font-size: 24px; transition: 0.3s; }
+        .nav i.active { color: var(--accent); text-shadow: 0 0 15px var(--accent); }
+
+        /* Магазин тарифов */
+        .offer { background: #161618; border: 1px solid #333; padding: 20px; border-radius: 22px; margin-bottom: 15px; }
+        .price-tag { background: var(--accent); color: black; padding: 5px 12px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="p-home" class="page active">
-        <div class="card" style="margin-top:20px">
-            <h1 id="b-val">0 VC</h1>
-            <p style="opacity:0.5">Баланс</p>
+        <div class="balance-card">
+            <p style="margin:0; opacity:0.8; font-size: 14px;">Ваш кошелек</p>
+            <h1 id="bal-view" style="font-size: 48px; margin: 5px 0;">0 VC</h1>
         </div>
-        <button class="btn" onclick="showP('chat')">🚀 Открыть чат</button>
-        <button class="btn btn-gray" onclick="showP('shop')">💎 Магазин</button>
-    </div>
-
-    <div id="p-chat" class="page">
-        <div id="lock" style="padding:50px 20px; text-align:center;">
-            <i class="fa-solid fa-lock" style="font-size:40px; color:#007AFF"></i>
-            <h3>Нужен ULTIMATE</h3>
-            <button class="btn" onclick="showP('shop')">Купить</button>
-        </div>
-        <div id="chat-content" style="display:none">
-            <div id="chat-win"><i>AI готов к вопросам...</i></div>
-            <div style="display:flex; gap:10px; padding-bottom:100px;">
-                <input type="text" id="c-inp" placeholder="Спросить...">
-                <button class="btn" style="width:50px; margin:0" onclick="sendL()">></button>
-            </div>
-        </div>
+        <button class="btn" onclick="showP('chat')"><span>Запустить ИИ</span> <i class="fa-solid fa-bolt"></i></button>
+        <button class="btn" onclick="showP('shop')"><span>Пополнить баланс</span> <i class="fa-solid fa-wallet"></i></button>
     </div>
 
     <div id="p-shop" class="page">
-        <h3>Магазин</h3>
-        <div class="card">
-            <b>ULTIMATE PASS</b><br><small>Безлимитный AI</small><br><br>
-            <button class="btn" onclick="sendB('buy_ultimate')">2300 VC</button>
+        <h2 style="margin-left: 10px;">Тарифы</h2>
+        <div class="offer" onclick="sendB('buy_pro')">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b>Тариф PRO</b>
+                <span class="price-tag">1400 VC</span>
+            </div>
+            <p style="font-size:12px; opacity:0.6; margin-top:10px;">Доступ к Gemini 1.5 Flash и базовому чату.</p>
         </div>
-        <button class="btn btn-gray" onclick="sendB('pay_stars')">Stars ⭐</button>
-        <button class="btn btn-gray" onclick="sendB('pay_crypto')">Crypto ₿</button>
+
+        <div class="offer" style="border-color: var(--accent);" onclick="sendB('buy_ultimate')">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="color: var(--accent);">Тариф ULTIMATE</b>
+                <span class="price-tag">2300 VC</span>
+            </div>
+            <p style="font-size:12px; opacity:0.6; margin-top:10px;">Полный безлимит: Claude 3.5, Genie и все ТОП модели.</p>
+        </div>
+
+        <button class="btn btn-gray" style="margin-top:20px" onclick="sendB('pay_stars')">⭐ Пополнить Stars</button>
     </div>
 
     <div id="p-profile" class="page">
-        <h3>Профиль</h3>
-        <div class="card" style="text-align:left">
-            ID: <span id="u-id">0</span><br>
-            Статус: <span id="u-sub">FREE</span>
+        <h2>Профиль</h2>
+        <div class="offer">
+            <p>ID: <span id="u-id">0</span></p>
+            <p>Статус: <span id="u-sub" style="color:var(--accent)">Free</span></p>
         </div>
-        <div class="card">
-            <p>Промокод</p>
-            <div style="display:flex; gap:10px">
-                <input type="text" id="pr-inp" placeholder="CODE">
-                <button class="btn" style="width:auto; margin:0; padding:0 20px" onclick="applyPr()">OK</button>
-            </div>
-        </div>
+        <input type="text" id="promo" placeholder="Промокод" style="width:100%; padding:15px; border-radius:15px; background:#1c1c1e; border:1px solid #333; color:white; box-sizing:border-box;">
+        <button class="btn" style="margin-top:10px; background:var(--accent); color:black;" onclick="applyPr()">Активировать</button>
     </div>
 
     <div class="nav">
         <i class="fa-solid fa-house active" onclick="showP('home')"></i>
-        <i class="fa-solid fa-comment" onclick="showP('chat')"></i>
-        <i class="fa-solid fa-wallet" onclick="showP('shop')"></i>
+        <i class="fa-solid fa-robot" onclick="showP('chat')"></i>
+        <i class="fa-solid fa-shop" onclick="showP('shop')"></i>
         <i class="fa-solid fa-user" onclick="showP('profile')"></i>
     </div>
 
@@ -83,43 +92,33 @@
         tg.expand();
         tg.ready();
 
-        const ps = new URLSearchParams(window.location.search);
-        const b = ps.get('bal') || '0';
-        const s = ps.get('sub') || 'free';
-        const u = tg.initDataUnsafe.user || {id:0};
+        const params = new URLSearchParams(window.location.search);
+        const bal = params.get('bal') || '0';
+        const sub = params.get('sub') || 'free';
+        const user = tg.initDataUnsafe.user || {id: 0};
 
-        document.getElementById('b-val').innerText = b + ' VC';
-        document.getElementById('u-id').innerText = u.id;
-        document.getElementById('u-sub').innerText = s.toUpperCase();
-        if(s === 'ultimate') {
-            document.getElementById('lock').style.display = 'none';
-            document.getElementById('chat-content').style.display = 'block';
-        }
+        document.getElementById('bal-view').innerText = bal + ' VC';
+        document.getElementById('u-id').innerText = user.id;
+        document.getElementById('u-sub').innerText = sub.toUpperCase();
 
         function showP(id) {
             tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
             document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-            const m = {home:0, chat:1, shop:2, profile:3};
-            document.querySelectorAll('.nav i')[m[id]].classList.add('active');
+            const map = {home:0, chat:1, shop:2, profile:3};
+            document.querySelectorAll('.nav i')[map[id]].classList.add('active');
         }
 
         function sendB(d) { tg.sendData(d); }
         function applyPr() {
-            const v = document.getElementById('pr-inp').value;
-            if(v) tg.sendData("promo:" + v);
-        }
-        function sendL() {
-            const i = document.getElementById('c-inp');
-            const w = document.getElementById('chat-win');
-            if(!i.value) return;
-            w.innerHTML += `<div><b>Вы:</b> ${i.value}</div>`;
-            i.value = "";
+            const code = document.getElementById('promo').value;
+            if(code) tg.sendData("promo:" + code);
         }
     </script>
 </body>
 </html>
+
 
 
 
