@@ -1,87 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --neon: #00f2ff; --bg: #050505; --card: rgba(20, 20, 25, 0.9); }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
-        .container { height: 100vh; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #222; margin-bottom: 10px; }
-        .bal-val { color: var(--neon); font-size: 20px; font-weight: 800; text-shadow: 0 0 10px var(--neon); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-        .model-btn { background: var(--card); border: 1px solid #222; padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 11px; transition: 0.2s; }
-        .model-btn.active { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 10px rgba(0,242,255,0.2); }
-        .model-btn i { display: block; font-size: 18px; margin-bottom: 5px; }
-        .input-area { background: var(--card); border-radius: 20px; border: 1px solid #222; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        textarea { flex-grow: 1; background: none; border: none; color: #fff; outline: none; resize: none; font-size: 14px; }
-        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .pay-btn { background: #f9d71c; color: #000; padding: 12px; border-radius: 12px; font-size: 12px; font-weight: bold; text-align: center; }
-        .send-btn { background: #fff; color: #000; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; margin-top: 10px; }
+        :root { --accent: #00f2ff; --bg: #050505; --card: #111114; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+        
+        .header { padding: 20px; background: var(--card); border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .page { display: none; flex: 1; padding: 20px; overflow-y: auto; box-sizing: border-box; }
+        .active { display: block; }
+
+        /* Чат и Нейронки */
+        .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .model-card { background: #1a1a1f; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 10px; }
+        .model-card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+        .model-card i { color: var(--accent); font-size: 20px; }
+
+        /* Ввод */
+        .input-container { position: sticky; bottom: 0; background: var(--bg); padding: 15px; border-top: 1px solid #222; }
+        .input-wrapper { background: #1a1a1f; border-radius: 20px; padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
+        textarea { flex: 1; background: none; border: none; color: #fff; outline: none; height: 24px; font-size: 14px; }
+
+        /* Профиль */
+        .profile-card { background: linear-gradient(135deg, #111, #1a1a1f); border: 1px solid #222; padding: 25px; border-radius: 25px; text-align: center; }
+        .vc-balance { font-size: 32px; font-weight: 900; color: var(--accent); margin: 10px 0; }
+
+        /* Навигация */
+        .navbar { height: 70px; background: #0a0a0c; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; }
+        .nav-item { color: #444; text-align: center; font-size: 11px; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        .btn-pay { background: var(--accent); color: #000; padding: 15px; border-radius: 15px; font-weight: bold; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <div><small style="color:#555">BALANCE</small><div class="bal-val" id="bal">0 VC</div></div>
-        <div style="text-align:right"><small style="color:#555">CORE</small><div id="sub" style="color:var(--neon)">FREE</div></div>
-    </div>
+<div class="header">
+    <div style="font-weight: 900; letter-spacing: 1px;">POULAI <span style="color:var(--accent)">TITAN</span></div>
+    <div onclick="tg.close()"><i class="fa-solid fa-xmark"></i></div>
+</div>
 
-    <div class="grid">
-        <div class="model-btn active" onclick="setM('GPT5', this)"><i class="fa-solid fa-brain"></i>GPT-5</div>
-        <div class="model-btn" onclick="setM('SORA2', this)"><i class="fa-solid fa-film"></i>Sora 2</div>
-        <div class="model-btn" onclick="setM('VEO3', this)"><i class="fa-solid fa-video"></i>Veo 3</div>
-        <div class="model-btn" onclick="setM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i>Claude 3</div>
-        <div class="model-btn" onclick="setM('GENIE', this)"><i class="fa-solid fa-cube"></i>Genie S</div>
-        <div class="model-btn" onclick="setM('DALL-E', this)"><i class="fa-solid fa-image"></i>DALL-E 3</div>
+<div id="page-chat" class="page active">
+    <div class="model-grid">
+        <div class="model-card active" onclick="selM('GPT-5', this)"><i class="fa-solid fa-brain"></i> GPT-5</div>
+        <div class="model-card" onclick="selM('SORA-2', this)"><i class="fa-solid fa-video"></i> Sora 2</div>
+        <div class="model-card" onclick="selM('VEO-3', this)"><i class="fa-solid fa-film"></i> Veo 3</div>
+        <div class="model-card" onclick="selM('GENIE', this)"><i class="fa-solid fa-cube"></i> Genie S</div>
+        <div class="model-card" onclick="selM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i> Claude 3.5</div>
+        <div class="model-card" onclick="selM('MIDJOURNEY', this)"><i class="fa-solid fa-image"></i> MJ v6</div>
     </div>
+    <div id="chat-messages" style="font-size: 14px; color: #aaa;">
+        Система готова к генерации. Выберите модель и введите запрос...
+    </div>
+</div>
 
-    <div class="input-area">
-        <textarea id="prompt" placeholder="Введите ваш запрос..."></textarea>
-        <div class="pay-row">
-            <div class="pay-btn" onclick="pay('PRO')">PRO ⭐ 140</div>
-            <div class="pay-btn" onclick="pay('ULTRA')">ULTRA ⭐ 230</div>
-        </div>
-        <div class="send-btn" onclick="send()">RUN SYSTEM ENGINE</div>
+<div id="page-wallet" class="page">
+    <div class="profile-card">
+        <img id="u-photo" src="https://via.placeholder.com/80" style="border-radius: 50%; border: 2px solid var(--accent);">
+        <h2 id="u-name" style="margin: 10px 0 5px 0;">User</h2>
+        <div id="u-sub" style="font-size: 12px; color: #555;">FREE ACCOUNT</div>
+        <div class="vc-balance" id="u-bal">0 VC</div>
     </div>
+    
+    <h3 style="margin-top: 30px;">Upgrade System</h3>
+    <div class="model-card" onclick="openBuy('PRO')">
+        <div style="flex:1"><b>PRO CORE</b><br><small>14.00 USDT / 140 Stars</small></div>
+        <i class="fa-solid fa-chevron-right"></i>
+    </div>
+    <div class="model-card" onclick="openBuy('ULTRA')" style="margin-top:10px; border-color: var(--accent);">
+        <div style="flex:1"><b>ULTRA TITAN</b><br><small>23.00 USDT / 230 Stars</small></div>
+        <i class="fa-solid fa-crown"></i>
+    </div>
+</div>
+
+<div class="input-container" id="input-bar">
+    <div class="input-wrapper">
+        <i class="fa-solid fa-paperclip" onclick="tg.showAlert('Прикрепите файл в чате бота!')"></i>
+        <textarea id="main-input" placeholder="Введите запрос..."></textarea>
+        <i class="fa-solid fa-paper-plane" style="color: var(--accent);" onclick="fire()"></i>
+    </div>
+</div>
+
+<div class="navbar">
+    <div class="nav-item active" onclick="nav('chat', this)"><i class="fa-solid fa-comment-dots"></i>CHAT</div>
+    <div class="nav-item" onclick="nav('wallet', this)"><i class="fa-solid fa-wallet"></i>WALLET</div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    let model = 'GPT5';
+    tg.backgroundColor = "#050505";
+    tg.headerColor = "#111114";
 
-    function setM(m, el) {
+    let selectedModel = 'GPT-5';
+
+    function nav(p, el) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        document.getElementById('page-' + p).classList.add('active');
+        el.classList.add('active');
+        document.getElementById('input-bar').style.display = (p === 'chat' ? 'block' : 'none');
+    }
+
+    function selM(m, el) {
         tg.HapticFeedback.impactOccurred('light');
-        model = m;
-        document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+        selectedModel = m;
+        document.querySelectorAll('.model-card').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
     }
 
-    function pay(plan) {
-        tg.HapticFeedback.impactOccurred('heavy');
-        tg.sendData(`pay_stars_${plan}`);
-    }
-
-    function send() {
-        const p = document.getElementById('prompt').value;
-        if(!p) return;
-        tg.HapticFeedback.notificationOccurred('success');
-        tg.sendData(`${model}|${p}`);
+    function fire() {
+        const txt = document.getElementById('main-input').value;
+        if(!txt) return;
+        tg.sendData(JSON.stringify({ type: 'generate', model: selectedModel, prompt: txt }));
         tg.close();
     }
 
+    function openBuy(plan) {
+        const method = confirm(`Оплатить ${plan} через Stars? (ОК - Stars, Отмена - Crypto)`) ? 'stars' : 'crypto';
+        tg.sendData(JSON.stringify({ type: 'pay', plan: plan, method: method }));
+    }
+
+    // Инициализация данных
     const u = new URLSearchParams(window.location.search);
-    document.getElementById('bal').innerText = (u.get('bal') || 0) + ' VC';
-    document.getElementById('sub').innerText = (u.get('sub') || 'FREE').toUpperCase();
+    document.getElementById('u-bal').innerText = (u.get('bal') || 0) + ' VC';
+    document.getElementById('u-sub').innerText = (u.get('sub') || 'FREE') + ' ACCOUNT';
+    document.getElementById('u-name').innerText = tg.initDataUnsafe.user?.first_name || 'Pilot';
 </script>
 </body>
 </html>
-
-
 
 
 
