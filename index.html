@@ -1,52 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IZUUP AI</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #0a0a0c; color: white; margin: 0; padding: 20px; }
-        .card { background: #161618; border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; }
-        .btn { background: #007AFF; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
-        .btn-pay { background: #222; border: 1px solid #444; }
-        .page { display: none; }
-        .active { display: block; }
-        #chat-box { height: 300px; overflow-y: auto; background: #000; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
-        .lock { text-align: center; padding: 40px 10px; background: rgba(0,0,0,0.9); border-radius: 15px; }
+        body { font-family: -apple-system, sans-serif; background: #0a0a0c; color: white; margin: 0; padding: 15px; overflow: hidden; }
+        .page { display: none; height: 100vh; flex-direction: column; }
+        .active { display: flex; }
+        .card { background: #1c1c1e; border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; }
+        .btn { background: #007AFF; color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; font-size: 16px; font-weight: 600; margin-bottom: 10px; cursor: pointer; }
+        .btn-gray { background: #2c2c2e; }
+        #chat-window { flex-grow: 1; overflow-y: auto; background: #000; padding: 15px; border-radius: 15px; margin-bottom: 80px; }
+        .msg { margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; max-width: 80%; }
+        .ai { background: #2c2c2e; align-self: flex-start; }
+        .user { background: #007AFF; align-self: flex-end; margin-left: auto; }
+        .lock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="home" class="page active">
+    <div id="p-home" class="page active">
         <div class="card">
-            <h2 id="bal">0 VC</h2>
-            <p>Ваш баланс</p>
+            <h1 id="bal-view" style="margin:0; font-size: 32px;">0 VC</h1>
+            <p style="opacity: 0.5; margin: 5px 0 0;">Твой баланс</p>
         </div>
-        <button class="btn" onclick="go('chat')">Открыть Чат</button>
-        <button class="btn btn-pay" onclick="go('shop')">Пополнить / Подписка</button>
+        <button class="btn" onclick="showP('p-chat')">🤖 Открыть Чат</button>
+        <button class="btn btn-gray" onclick="showP('p-shop')">💎 Магазин</button>
     </div>
 
-    <div id="chat" class="page">
-        <div id="sub-lock" class="lock">
-            <i class="fa-solid fa-lock" style="font-size: 40px; color: #007AFF;"></i>
-            <h3>Нужна подписка ULTIMATE</h3>
-            <button class="btn" onclick="go('shop')">Купить доступ</button>
+    <div id="p-chat" class="page">
+        <div id="sub-lock" class="lock-overlay">
+            <i class="fa-solid fa-lock" style="font-size: 50px; color: #007AFF; margin-bottom: 20px;"></i>
+            <h2>Нужен ULTIMATE</h2>
+            <p style="padding: 0 40px; opacity: 0.7;">Чат доступен только для пользователей с активной подпиской.</p>
+            <button class="btn" onclick="showP('p-shop')" style="width: 80%;">В МАГАЗИН</button>
+            <button class="btn btn-gray" onclick="showP('p-home')" style="width: 80%;">НАЗАД</button>
         </div>
-        <div id="chat-content" style="display:none">
-            <div id="chat-box">Чат готов...</div>
-            <input type="text" style="width:70%; padding:10px; border-radius:10px;">
-            <button class="btn" style="width:25%; display:inline">-></button>
+        <div id="chat-window">
+            <div class="msg ai">Привет! Я Gemini AI. Чем могу помочь?</div>
         </div>
-        <br><button class="btn btn-pay" onclick="go('home')">Назад</button>
+        <div style="position: fixed; bottom: 20px; left: 15px; right: 15px; display: flex; gap: 10px;">
+            <input type="text" id="inp" placeholder="Спросить..." style="flex:1; padding: 15px; border-radius: 12px; border:none; background: #1c1c1e; color: white;">
+            <button class="btn" style="width: 60px; margin:0;" onclick="sendLocal()">></button>
+        </div>
     </div>
 
-    <div id="shop" class="page">
-        <h3>Магазин</h3>
-        <button class="btn" onclick="send('buy_ultimate')">Купить ULTIMATE (2300 VC)</button>
-        <button class="btn btn-pay" onclick="send('pay_stars')">Оплатить Stars ⭐</button>
-        <button class="btn btn-pay" onclick="send('pay_crypto')">Оплатить Crypto ₿</button>
-        <br><button class="btn btn-pay" onclick="go('home')">Назад</button>
+    <div id="p-shop" class="page">
+        <h2>Магазин</h2>
+        <div class="card">
+            <h3>ULTIMATE PASS</h3>
+            <p style="opacity: 0.7; font-size: 14px;">Доступ ко всем нейросетям (Gemini, Claude, Genie) без лимитов.</p>
+            <button class="btn" onclick="sendToBot('buy_ultimate')">АКТИВИРОВАТЬ ЗА 2300 VC</button>
+        </div>
+        <button class="btn btn-gray" onclick="sendToBot('pay_stars')">Пополнить через Stars ⭐</button>
+        <button class="btn btn-gray" onclick="sendToBot('pay_crypto')">Пополнить через Crypto ₿</button>
+        <button class="btn btn-gray" onclick="showP('p-home')">Назад</button>
     </div>
 
     <script>
@@ -54,28 +65,32 @@
         tg.expand();
         tg.ready();
 
-        // Читаем данные из ссылки от бота
-        const urlParams = new URLSearchParams(window.location.search);
-        const sub = urlParams.get('sub');
-        const balance = urlParams.get('bal');
+        const params = new URLSearchParams(window.location.search);
+        const sub = params.get('sub');
+        const bal = params.get('bal');
 
-        if(balance) document.getElementById('bal').innerText = balance + ' VC';
-        if(sub === 'ultimate') {
-            document.getElementById('sub-lock').style.display = 'none';
-            document.getElementById('chat-content').style.display = 'block';
-        }
+        if(bal) document.getElementById('bal-view').innerText = bal + ' VC';
+        if(sub === 'ultimate') document.getElementById('sub-lock').style.display = 'none';
 
-        function go(id) {
+        function showP(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        function send(data) {
-            tg.sendData(data); // Отправляет боту команду и закрывает окно
+        function sendToBot(command) {
+            tg.sendData(command); // Это закроет приложение и отправит боту текст
+        }
+
+        function sendLocal() {
+            const val = document.getElementById('inp').value;
+            if(!val) return;
+            document.getElementById('chat-window').innerHTML += `<div class="msg user">${val}</div>`;
+            document.getElementById('inp').value = "";
         }
     </script>
 </body>
 </html>
+
 
 
 
