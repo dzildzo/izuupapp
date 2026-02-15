@@ -3,226 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PoulAI Ultra</title>
+    <title>PoulAI Titan</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --primary: #00d2ff; --bg: #000000; --card: #141414; --text: #ffffff; }
-        body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --accent: #00f2ff; --bg: #000; --card: #121214; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER */
-        .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; background: rgba(20,20,20,0.9); backdrop-filter: blur(10px); }
-        .balance-badge { background: linear-gradient(45deg, #00d2ff, #005bea); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(0,210,255,0.4); }
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: #0a0a0a; }
+        .bal { background: linear-gradient(90deg, #00c6ff, #0072ff); padding: 5px 12px; border-radius: 15px; font-weight: bold; font-size: 14px; }
 
-        /* CONTENT PAGES */
-        .page { flex: 1; overflow-y: auto; display: none; padding: 20px; padding-bottom: 90px; }
+        .page { flex: 1; overflow-y: auto; display: none; padding: 20px; padding-bottom: 80px; }
         .page.active { display: block; }
 
-        /* GRID FOR AI MODELS */
-        .ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-        .ai-card { background: var(--card); border: 1px solid #333; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; cursor: pointer; }
-        .ai-card.selected { border-color: var(--primary); background: rgba(0, 210, 255, 0.1); }
-        .ai-card i { font-size: 24px; color: #888; }
-        .ai-card.selected i { color: var(--primary); }
-        .ai-name { font-size: 12px; font-weight: 600; }
+        /* Сетка Нейросетей */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card { background: var(--card); border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; }
+        .card.active { border-color: var(--accent); background: rgba(0, 242, 255, 0.05); }
+        .card i { color: #666; font-size: 20px; }
+        .card.active i { color: var(--accent); }
 
-        /* SHOP CARDS (IMPORTANT!) */
-        .shop-card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; position: relative; overflow: hidden; }
-        .shop-card.ultra { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
-        .plan-title { font-size: 22px; font-weight: 900; margin-bottom: 5px; }
-        .plan-desc { color: #888; font-size: 13px; margin-bottom: 15px; }
-        
-        .pay-buttons { display: flex; gap: 10px; }
-        .btn-pay { flex: 1; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: bold; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+        /* Магазин */
+        .shop-item { background: var(--card); border: 1px solid #333; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+        .shop-item.ultra { border-color: gold; box-shadow: 0 0 10px rgba(255, 215, 0, 0.1); }
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px; }
         .btn-stars { background: #f9d71c; color: #000; }
-        .btn-crypto { background: #00d2ff; color: #000; }
-        .btn-pay:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-crypto { background: var(--accent); color: #000; }
 
-        /* INPUT AREA */
-        .input-dock { position: fixed; bottom: 70px; left: 0; width: 100%; padding: 10px; box-sizing: border-box; background: linear-gradient(to top, #000, transparent); pointer-events: none; }
-        .input-bar { pointer-events: auto; background: #1a1a1a; border-radius: 25px; display: flex; align-items: center; padding: 5px 15px; border: 1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-        .attach-btn { color: #888; font-size: 20px; padding: 10px; }
-        textarea { flex: 1; background: transparent; border: none; color: white; padding: 10px; height: 24px; resize: none; outline: none; font-size: 16px; }
-        .send-btn { color: var(--primary); font-size: 20px; padding: 10px; }
+        /* Инпут */
+        .input-box { position: fixed; bottom: 70px; left: 0; width: 100%; padding: 10px; box-sizing: border-box; background: linear-gradient(to top, #000, transparent); pointer-events: none; }
+        .input-inner { pointer-events: auto; background: #1a1a1a; padding: 5px 15px; border-radius: 25px; display: flex; align-items: center; border: 1px solid #333; }
+        textarea { flex: 1; background: none; border: none; color: white; height: 24px; outline: none; resize: none; }
 
-        /* BOTTOM NAVIGATION */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 65px; background: #111; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #666; font-size: 10px; width: 60px; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 22px; }
-
+        /* Навигация */
+        .nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; }
+        .nav-icon { color: #555; font-size: 24px; }
+        .nav-icon.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="font-weight: 800; font-size: 18px;">POUL<span style="color:var(--primary)">AI</span></div>
-        <div class="balance-badge" id="display-bal">0 VC</div>
+        <div style="font-weight: 900;">TITAN <span style="color:var(--accent)">OS</span></div>
+        <div class="bal" id="bal">0 VC</div>
     </div>
 
     <div id="p-chat" class="page active">
-        <h3 style="color:#666; font-size:12px; margin-bottom:10px;">NEURAL ENGINE</h3>
-        <div class="ai-grid">
-            <div class="ai-card selected" onclick="selectModel('GPT-5', this)">
-                <i class="fa-solid fa-brain"></i>
-                <span class="ai-name">GPT-5</span>
-            </div>
-            <div class="ai-card" onclick="selectModel('SORA-2', this)">
-                <i class="fa-solid fa-video"></i>
-                <span class="ai-name">SORA 2</span>
-            </div>
-            <div class="ai-card" onclick="selectModel('VEO-3', this)">
-                <i class="fa-solid fa-film"></i>
-                <span class="ai-name">VEO 3</span>
-            </div>
-            <div class="ai-card" onclick="selectModel('GENIE', this)">
-                <i class="fa-solid fa-cube"></i>
-                <span class="ai-name">GENIE 3D</span>
-            </div>
-            <div class="ai-card" onclick="selectModel('MJ-V6', this)">
-                <i class="fa-solid fa-palette"></i>
-                <span class="ai-name">MJ v6</span>
-            </div>
-            <div class="ai-card" onclick="selectModel('CLAUDE', this)">
-                <i class="fa-solid fa-bolt"></i>
-                <span class="ai-name">CLAUDE 3</span>
-            </div>
+        <div class="grid">
+            <div class="card active" onclick="setM('GPT-5', this)"><i class="fa-solid fa-brain"></i> GPT-5</div>
+            <div class="card" onclick="setM('SORA-2', this)"><i class="fa-solid fa-film"></i> Sora 2</div>
+            <div class="card" onclick="setM('VEO-3', this)"><i class="fa-solid fa-video"></i> Veo 3</div>
+            <div class="card" onclick="setM('GENIE', this)"><i class="fa-solid fa-cube"></i> Genie</div>
+            <div class="card" onclick="setM('MJ-V6', this)"><i class="fa-solid fa-palette"></i> MJ v6</div>
+            <div class="card" onclick="setM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i> Claude</div>
         </div>
-        
-        <div style="text-align:center; color:#444; font-size:12px; margin-top:20px;">
-            Система готова. Выберите модель и введите запрос.
+        <div style="text-align: center; color: #444; margin-top: 20px; font-size: 12px;">
+            Система активна. Выберите модель выше.
         </div>
     </div>
 
-    <div id="p-market" class="page">
-        <h2 style="margin-bottom: 20px;">Store</h2>
-
-        <div class="shop-card">
-            <div class="plan-title">PRO CORE</div>
-            <div class="plan-desc">GPT-5, Быстрая генерация, Доступ к файлам</div>
-            <div class="pay-buttons">
-                <div class="btn-pay btn-stars" onclick="pay('PRO', 'stars')">
-                    <i class="fa-solid fa-star"></i> 140
-                </div>
-                <div class="btn-pay btn-crypto" onclick="pay('PRO', 'crypto')">
-                    <i class="fa-brands fa-usdt"></i> 14.0
-                </div>
+    <div id="p-shop" class="page">
+        <h2 style="margin-top: 0;">Upgrade Core</h2>
+        
+        <div class="shop-item">
+            <h3>PRO CORE</h3>
+            <div style="color: #888; font-size: 12px;">Базовый доступ к GPT-5 и файлам</div>
+            <div class="btn-row">
+                <div class="btn btn-stars" onclick="pay('PRO', 'stars')"><i class="fa-solid fa-star"></i> 140</div>
+                <div class="btn btn-crypto" onclick="pay('PRO', 'crypto')"><i class="fa-brands fa-usdt"></i> 14.0</div>
             </div>
         </div>
 
-        <div class="shop-card ultra">
-            <div class="plan-title" style="color:#ffd700">ULTRA TITAN</div>
-            <div class="plan-desc">Sora 2 Video, Veo 3, Genie 3D, Приоритет</div>
-            <div class="pay-buttons">
-                <div class="btn-pay btn-stars" onclick="pay('ULTRA', 'stars')">
-                    <i class="fa-solid fa-star"></i> 230
-                </div>
-                <div class="btn-pay btn-crypto" onclick="pay('ULTRA', 'crypto')">
-                    <i class="fa-brands fa-usdt"></i> 23.0
-                </div>
+        <div class="shop-item ultra">
+            <h3 style="color: gold;">ULTRA TITAN</h3>
+            <div style="color: #888; font-size: 12px;">Sora 2, Veo 3, Genie 3D + Priority</div>
+            <div class="btn-row">
+                <div class="btn btn-stars" onclick="pay('ULTRA', 'stars')"><i class="fa-solid fa-star"></i> 230</div>
+                <div class="btn btn-crypto" onclick="pay('ULTRA', 'crypto')"><i class="fa-brands fa-usdt"></i> 23.0</div>
             </div>
         </div>
     </div>
 
     <div id="p-profile" class="page">
-        <div style="text-align:center; margin-top:30px;">
-            <i class="fa-solid fa-user-astronaut" style="font-size: 60px; color: #333; border: 2px solid #333; padding: 20px; border-radius: 50%;"></i>
-            <h2 id="user-name" style="margin-top:10px;">Pilot</h2>
-            <div id="user-sub" style="color:var(--primary)">FREE ACCOUNT</div>
+        <center style="margin-top: 30px;">
+            <i class="fa-solid fa-circle-user" style="font-size: 60px; color: #333;"></i>
+            <h2 id="u-name">User</h2>
+            <div id="u-sub" style="color: var(--accent);">FREE</div>
+        </center>
+    </div>
+
+    <div class="input-box" id="inp-ui">
+        <div class="input-inner">
+            <i class="fa-solid fa-paperclip" style="color: #666; margin-right: 10px;" onclick="tg.showAlert('Пришлите файл в чат бота!')"></i>
+            <textarea id="prompt" placeholder="Запрос..."></textarea>
+            <i class="fa-solid fa-paper-plane" style="color: var(--accent); margin-left: 10px;" onclick="send()"></i>
         </div>
     </div>
 
-    <div class="input-dock" id="input-ui">
-        <div class="input-bar">
-            <div class="attach-btn" onclick="tg.showAlert('Для анализа файлов отправьте их прямо в чат бота (не в Mini App)! Я их увижу.')">
-                <i class="fa-solid fa-paperclip"></i>
-            </div>
-            <textarea id="prompt-in" placeholder="Запрос к ИИ..."></textarea>
-            <div class="send-btn" onclick="sendAi()">
-                <i class="fa-solid fa-paper-plane"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="tab('chat', this)">
-            <i class="fa-solid fa-terminal"></i>
-            <span>Terminal</span>
-        </div>
-        <div class="nav-item" onclick="tab('market', this)">
-            <i class="fa-solid fa-bag-shopping"></i>
-            <span>Market</span>
-        </div>
-        <div class="nav-item" onclick="tab('profile', this)">
-            <i class="fa-regular fa-id-card"></i>
-            <span>Profile</span>
-        </div>
+    <div class="nav">
+        <i class="fa-solid fa-terminal nav-icon active" onclick="tab('chat', this)"></i>
+        <i class="fa-solid fa-cart-shopping nav-icon" onclick="tab('shop', this)"></i>
+        <i class="fa-solid fa-user nav-icon" onclick="tab('profile', this)"></i>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        // Включаем темную тему принудительно для статуса
-        tg.setHeaderColor('#141414');
+        tg.setHeaderColor('#0a0a0a');
         tg.setBackgroundColor('#000000');
 
-        let currentModel = 'GPT-5';
+        let model = 'GPT-5';
 
-        // Инициализация данных из URL
-        const params = new URLSearchParams(window.location.search);
-        const bal = params.get('bal') || '0';
-        const sub = params.get('sub') || 'FREE';
-        
-        document.getElementById('display-bal').innerText = bal + ' VC';
-        document.getElementById('user-sub').innerText = sub.toUpperCase() + ' PLAN';
-        if(tg.initDataUnsafe.user) {
-            document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
-        }
+        // URL PARAMS
+        const p = new URLSearchParams(window.location.search);
+        document.getElementById('bal').innerText = (p.get('bal') || 0) + ' VC';
+        document.getElementById('u-sub').innerText = (p.get('sub') || 'FREE').toUpperCase();
+        if(tg.initDataUnsafe.user) document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name;
 
-        // Логика Табов
-        function tab(name, el) {
+        function tab(id, el) {
             tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('p-' + name).classList.add('active');
+            document.querySelectorAll('.nav-icon').forEach(n => n.classList.remove('active'));
+            document.getElementById('p-'+id).classList.add('active');
             el.classList.add('active');
-
-            // Скрываем инпут если не чат
-            document.getElementById('input-ui').style.display = (name === 'chat') ? 'block' : 'none';
+            document.getElementById('inp-ui').style.display = id === 'chat' ? 'block' : 'none';
         }
 
-        // Выбор модели
-        function selectModel(name, el) {
+        function setM(m, el) {
             tg.HapticFeedback.selectionChanged();
-            currentModel = name;
-            document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
+            model = m;
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        // ГЕНЕРАЛЬНАЯ ФУНКЦИЯ ОПЛАТЫ (ВОТ ОНА!)
         function pay(plan, method) {
             tg.HapticFeedback.notificationOccurred('warning');
-            // Отправляем JSON объект
-            const data = {
-                action: "payment",
-                method: method, // 'stars' или 'crypto'
-                plan: plan      // 'PRO' или 'ULTRA'
-            };
-            tg.sendData(JSON.stringify(data));
+            // ОТПРАВЛЯЕМ ЧИСТЫЙ JSON
+            tg.sendData(JSON.stringify({ action: "payment", method: method, plan: plan }));
         }
 
-        // Отправка запроса ИИ
-        function sendAi() {
-            const txt = document.getElementById('prompt-in').value;
+        function send() {
+            const txt = document.getElementById('prompt').value;
             if(!txt) return;
             tg.HapticFeedback.notificationOccurred('success');
-            
-            const data = {
-                action: "generate",
-                model: currentModel,
-                prompt: txt
-            };
-            tg.sendData(JSON.stringify(data));
+            tg.sendData(JSON.stringify({ action: "generate", model: model, prompt: txt }));
             tg.close();
         }
     </script>
