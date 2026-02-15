@@ -7,51 +7,71 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --bg: #050505; --card: #121214; --accent: #00d2ff; --grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; overflow: hidden; }
-        .page { display: none; height: 100vh; flex-direction: column; }
-        .active { display: flex; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .balance-card { background: var(--grad); border-radius: 25px; padding: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3); }
-        .btn { background: var(--card); border: 1px solid #222; padding: 18px; border-radius: 20px; width: 100%; color: white; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; cursor:pointer; }
-        .offer { background: #161618; border: 1px solid #333; padding: 20px; border-radius: 22px; margin-bottom: 15px; }
-        .price-tag { background: var(--accent); color: black; padding: 5px 12px; border-radius: 10px; font-weight: bold; }
-        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 20px 0 35px; border-top: 1px solid #222; }
-        .nav i { color: #444; font-size: 24px; }
-        .nav i.active { color: var(--accent); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; overflow-x: hidden; }
+        
+        .page { display: none; min-height: 100vh; flex-direction: column; }
+        .active { display: flex; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .balance-card { 
+            background: var(--grad); border-radius: 30px; padding: 35px 20px; 
+            text-align: center; margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0, 210, 255, 0.2); 
+        }
+        
+        .btn { 
+            background: var(--card); border: 1px solid #222; padding: 18px; 
+            border-radius: 20px; width: 100%; color: white; font-weight: 600; 
+            margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .btn:active { background: #1a1a1c; transform: scale(0.98); }
+
+        .offer { background: #161618; border: 1px solid #333; padding: 20px; border-radius: 22px; margin-bottom: 15px; position: relative; }
+        .offer.active-sub { border-color: var(--accent); background: rgba(0, 210, 255, 0.05); }
+        .price-tag { background: var(--accent); color: black; padding: 5px 12px; border-radius: 10px; font-weight: 800; }
+
+        .nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.9);
+            backdrop-filter: blur(15px); display: flex; justify-content: space-around; 
+            padding: 15px 0 30px; border-top: 1px solid #222; z-index: 100;
+        }
+        .nav i { color: #444; font-size: 22px; transition: 0.2s; }
+        .nav i.active { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
     </style>
 </head>
 <body>
 
     <div id="p-home" class="page active">
         <div class="balance-card">
-            <p style="margin:0; opacity:0.8; font-size: 14px;">Ваш баланс</p>
-            <h1 id="bal-view" style="font-size: 48px; margin: 5px 0;">0 VC</h1>
+            <p style="margin:0; opacity:0.8; font-size: 14px;">МОЙ БАЛАНС</p>
+            <h1 id="bal-view" style="font-size: 52px; margin: 10px 0;">0 VC</h1>
         </div>
-        <button class="btn" onclick="tg.close()"><span>Открыть чат с ИИ</span> <i class="fa-solid fa-bolt"></i></button>
-        <button class="btn" onclick="showP('shop')"><span>Купить VC</span> <i class="fa-solid fa-wallet"></i></button>
+        <button class="btn" onclick="tg.close()"><span>Чат с нейросетью</span> <i class="fa-solid fa-comment-dots"></i></button>
+        <button class="btn" onclick="showP('shop')"><span>Пополнить баланс</span> <i class="fa-solid fa-plus"></i></button>
     </div>
 
     <div id="p-shop" class="page">
-        <h2>Магазин</h2>
-        <div class="offer" onclick="sendB('buy_pro')">
+        <h2 style="margin-left: 10px;">Магазин тарифов</h2>
+        <div class="offer" id="off-pro" onclick="sendB('buy_pro')">
             <b>Тариф PRO</b> <span class="price-tag">1400 VC</span>
-            <p style="font-size:12px; opacity:0.5;">Gemini Flash ИИ</p>
+            <p style="font-size:12px; opacity:0.5; margin-top:8px;">Доступ к Gemini Flash ИИ</p>
         </div>
-        <div class="offer" style="border-color:var(--accent)" onclick="sendB('buy_ultimate')">
-            <b style="color:var(--accent)">Тариф ULTIMATE</b> <span class="price-tag">2300 VC</span>
-            <p style="font-size:12px; opacity:0.5;">Gemini Pro (Самый умный)</p>
+        <div class="offer" id="off-ultimate" style="border-color: #f9d71c" onclick="sendB('buy_ultimate')">
+            <b style="color:#f9d71c">Тариф ULTIMATE</b> <span class="price-tag" style="background:#f9d71c">2300 VC</span>
+            <p style="font-size:12px; opacity:0.5; margin-top:8px;">Самый мощный ИИ (Gemini Pro)</p>
         </div>
-        <button class="btn" style="background:#222" onclick="sendB('pay_crypto')">💎 Пополнить через CryptoBot</button>
+        <button class="btn" style="border-color: #00d2ff; color: #00d2ff;" onclick="sendB('pay_crypto')">
+            <span>Купить VC через CryptoBot</span> <i class="fa-solid fa-bolt"></i>
+        </button>
     </div>
 
     <div id="p-profile" class="page">
-        <h2>Профиль</h2>
+        <h2>Мой Профиль</h2>
         <div class="offer">
-            <p>ID: <span id="u-id">0</span></p>
-            <p>Статус: <span id="u-sub" style="color:var(--accent)">Free</span></p>
+            <p>Ваш ID: <code id="u-id">0</code></p>
+            <p>Текущий статус: <b id="u-sub" style="color:var(--accent)">FREE</b></p>
         </div>
-        <input type="text" id="promo" placeholder="Промокод" style="width:100%; padding:15px; border-radius:15px; background:#1c1c1e; border:1px solid #333; color:white; box-sizing:border-box;">
-        <button class="btn" style="margin-top:10px; background:var(--accent); color:black;" onclick="applyPr()">Активировать</button>
+        <input type="text" id="promo" placeholder="Промокод" style="width:100%; padding:18px; border-radius:15px; background:#1c1c1e; border:1px solid #333; color:white; font-size:16px;">
+        <button class="btn" style="margin-top:15px; background:var(--accent); color:black;" onclick="applyPr()">Активировать</button>
     </div>
 
     <div class="nav">
@@ -64,23 +84,39 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         const ps = new URLSearchParams(window.location.search);
-        document.getElementById('bal-view').innerText = (ps.get('bal') || '0') + ' VC';
-        document.getElementById('u-sub').innerText = (ps.get('sub') || 'free').toUpperCase();
-        document.getElementById('u-id').innerText = tg.initDataUnsafe.user?.id || '0';
+        
+        const balance = ps.get('bal') || '0';
+        const subStatus = ps.get('sub') || 'free';
+
+        document.getElementById('bal-view').innerText = balance + ' VC';
+        document.getElementById('u-sub').innerText = subStatus.toUpperCase();
+        document.getElementById('u-id').innerText = tg.initDataUnsafe.user?.id || '6369970333';
+
+        // Выделяем активный тариф
+        if (subStatus !== 'free') {
+            const activeOffer = document.getElementById('off-' + subStatus);
+            if (activeOffer) activeOffer.classList.add('active-sub');
+        }
 
         function showP(id) {
+            tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
+            
             document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
+            const map = {home: 0, shop: 1, profile: 2};
+            document.querySelectorAll('.nav i')[map[id]].classList.add('active');
         }
+
         function sendB(d) { tg.sendData(d); tg.close(); }
         function applyPr() {
             const c = document.getElementById('promo').value;
-            if(c) { tg.sendData("promo:" + c); tg.close(); }
+            if(c) { tg.sendData("promo:" + c.trim()); tg.close(); }
         }
     </script>
 </body>
 </html>
+
 
 
 
