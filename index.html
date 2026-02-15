@@ -8,101 +8,54 @@
     <style>
         :root { --bg: #050505; --card: #121214; --accent: #00d2ff; --grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; overflow: hidden; }
-        
         .page { display: none; height: 100vh; flex-direction: column; }
-        .active { display: flex; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-
-        .balance-card { 
-            background: var(--grad); border-radius: 30px; padding: 40px 20px; 
-            text-align: center; margin-bottom: 25px; box-shadow: 0 10px 40px rgba(0, 210, 255, 0.2);
-        }
-        
-        .btn { 
-            background: var(--card); border: 1px solid #222; padding: 20px; 
-            border-radius: 22px; width: 100%; color: white; font-weight: 600; 
-            margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
-        }
-        .btn i { color: var(--accent); }
-
-        .offer { background: #161618; border: 1px solid #333; padding: 20px; border-radius: 25px; margin-bottom: 15px; transition: 0.3s; }
-        .offer.premium { border-color: var(--accent); background: rgba(0, 210, 255, 0.05); }
-        .price { background: var(--accent); color: black; padding: 6px 15px; border-radius: 12px; font-weight: 800; font-size: 14px; }
-
-        #chat-win { flex-grow: 1; overflow-y: auto; padding-bottom: 150px; }
-        .nav { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.9);
-            backdrop-filter: blur(15px); display: flex; justify-content: space-around; 
-            padding: 20px 0 35px; border-top: 1px solid #222; 
-        }
+        .active { display: flex; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .balance-card { background: var(--grad); border-radius: 25px; padding: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3); }
+        .btn { background: var(--card); border: 1px solid #222; padding: 18px; border-radius: 20px; width: 100%; color: white; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; cursor:pointer; }
+        .offer { background: #161618; border: 1px solid #333; padding: 20px; border-radius: 22px; margin-bottom: 15px; }
+        .price-tag { background: var(--accent); color: black; padding: 5px 12px; border-radius: 10px; font-weight: bold; }
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,12,0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 20px 0 35px; border-top: 1px solid #222; }
         .nav i { color: #444; font-size: 24px; }
-        .nav i.active { color: var(--accent); text-shadow: 0 0 15px var(--accent); }
+        .nav i.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div id="p-home" class="page active">
         <div class="balance-card">
-            <p style="margin:0; opacity:0.7; font-size: 14px; text-transform: uppercase;">Доступный баланс</p>
-            <h1 id="bal-view" style="font-size: 56px; margin: 10px 0;">0 VC</h1>
+            <p style="margin:0; opacity:0.8; font-size: 14px;">Ваш баланс</p>
+            <h1 id="bal-view" style="font-size: 48px; margin: 5px 0;">0 VC</h1>
         </div>
-        <button class="btn" onclick="showP('chat')"><span>Запустить PoulAI</span> <i class="fa-solid fa-bolt-lightning"></i></button>
-        <button class="btn" onclick="showP('shop')"><span>Магазин валюты</span> <i class="fa-solid fa-gem"></i></button>
-    </div>
-
-    <div id="p-chat" class="page">
-        <div id="chat-win">
-            <div style="background:#1c1c1e; padding:15px; border-radius:15px; margin-bottom:10px;">
-                🤖 <b>PoulAI:</b> Привет! Я готов. Что хочешь узнать?
-            </div>
-        </div>
-        <div style="position:fixed; bottom:110px; left:15px; right:15px; display:flex; gap:10px;">
-            <input type="text" id="c-inp" style="flex:1; background:#1c1c1e; border:1px solid #333; color:white; padding:15px; border-radius:15px; outline:none;" placeholder="Ваш запрос...">
-            <button class="btn" style="width:60px; margin:0; justify-content:center;" onclick="sendLocal()">></button>
-        </div>
+        <button class="btn" onclick="tg.close()"><span>Открыть чат с ИИ</span> <i class="fa-solid fa-bolt"></i></button>
+        <button class="btn" onclick="showP('shop')"><span>Купить VC</span> <i class="fa-solid fa-wallet"></i></button>
     </div>
 
     <div id="p-shop" class="page">
-        <h2 style="margin-left: 10px;">Тарифные планы</h2>
+        <h2>Магазин</h2>
         <div class="offer" onclick="sendB('buy_pro')">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>Тариф PRO</b>
-                <span class="price">1400 VC</span>
-            </div>
-            <p style="font-size:12px; opacity:0.6; margin-top:10px;">Доступ к Gemini Flash и базовым функциям.</p>
+            <b>Тариф PRO</b> <span class="price-tag">1400 VC</span>
+            <p style="font-size:12px; opacity:0.5;">Gemini Flash ИИ</p>
         </div>
-
-        <div class="offer premium" onclick="sendB('buy_ultimate')">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="color:var(--accent)">Тариф ULTIMATE</b>
-                <span class="price">2300 VC</span>
-            </div>
-            <p style="font-size:12px; opacity:0.6; margin-top:10px;">Полный безлимит, доступ к GPT-4o и Claude 3.5.</p>
+        <div class="offer" style="border-color:var(--accent)" onclick="sendB('buy_ultimate')">
+            <b style="color:var(--accent)">Тариф ULTIMATE</b> <span class="price-tag">2300 VC</span>
+            <p style="font-size:12px; opacity:0.5;">Gemini Pro (Самый умный)</p>
         </div>
-
-        <button class="btn" style="border-color: #f9d71c;" onclick="sendB('pay_stars')">
-            <span>Купить 1200 VC (Stars)</span> <i class="fa-solid fa-star" style="color: #f9d71c;"></i>
-        </button>
+        <button class="btn" style="background:#222" onclick="sendB('pay_crypto')">💎 Пополнить через CryptoBot</button>
     </div>
 
     <div id="p-profile" class="page">
-        <h2>Мой аккаунт</h2>
+        <h2>Профиль</h2>
         <div class="offer">
-            <p>ID: <span id="u-id" style="color:var(--accent)">0</span></p>
-            <p>Статус: <span id="u-sub" style="font-weight:bold;">FREE</span></p>
+            <p>ID: <span id="u-id">0</span></p>
+            <p>Статус: <span id="u-sub" style="color:var(--accent)">Free</span></p>
         </div>
-        <div style="padding:10px">
-            <p style="opacity:0.6; font-size:14px; margin-bottom:10px;">Активация промокода:</p>
-            <div style="display:flex; gap:10px">
-                <input type="text" id="pr-code" style="flex:1; background:#1c1c1e; border:1px solid #333; color:white; padding:12px; border-radius:12px;" placeholder="Введите код...">
-                <button class="btn" style="width:auto; margin:0; padding:0 20px; background:var(--accent); color:black;" onclick="applyPr()">OK</button>
-            </div>
-        </div>
+        <input type="text" id="promo" placeholder="Промокод" style="width:100%; padding:15px; border-radius:15px; background:#1c1c1e; border:1px solid #333; color:white; box-sizing:border-box;">
+        <button class="btn" style="margin-top:10px; background:var(--accent); color:black;" onclick="applyPr()">Активировать</button>
     </div>
 
     <div class="nav">
         <i class="fa-solid fa-house active" onclick="showP('home')"></i>
-        <i class="fa-solid fa-comment" onclick="showP('chat')"></i>
         <i class="fa-solid fa-shop" onclick="showP('shop')"></i>
         <i class="fa-solid fa-user" onclick="showP('profile')"></i>
     </div>
@@ -110,32 +63,20 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
-
         const ps = new URLSearchParams(window.location.search);
         document.getElementById('bal-view').innerText = (ps.get('bal') || '0') + ' VC';
-        document.getElementById('u-sub').innerText = (ps.get('sub') || 'FREE').toUpperCase();
+        document.getElementById('u-sub').innerText = (ps.get('sub') || 'free').toUpperCase();
         document.getElementById('u-id').innerText = tg.initDataUnsafe.user?.id || '0';
 
         function showP(id) {
-            tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
             document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-            const map = {home:0, chat:1, shop:2, profile:3};
-            document.querySelectorAll('.nav i')[map[id]].classList.add('active');
         }
-
         function sendB(d) { tg.sendData(d); tg.close(); }
         function applyPr() {
-            const v = document.getElementById('pr-code').value;
-            if(v) { tg.sendData("promo:" + v); tg.close(); }
-        }
-        function sendLocal() {
-            const i = document.getElementById('c-inp');
-            if(!i.value) return;
-            document.getElementById('chat-win').innerHTML += `<div style="text-align:right; margin-bottom:10px;"><span style="background:var(--accent); color:black; padding:10px; border-radius:15px; display:inline-block;">${i.value}</span></div>`;
-            i.value = "";
+            const c = document.getElementById('promo').value;
+            if(c) { tg.sendData("promo:" + c); tg.close(); }
         }
     </script>
 </body>
