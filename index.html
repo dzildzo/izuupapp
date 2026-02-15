@@ -7,61 +7,49 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --accent: #00f2ff; --bg: #000; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; padding-top: calc(env(safe-area-inset-top) + 10px); }
         .page { flex: 1; overflow-y: auto; display: none; padding: 20px; }
         .page.active { display: block; }
         .card { background: #111; border: 1px solid #333; padding: 20px; border-radius: 18px; margin-bottom: 15px; }
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; color: #000; }
+        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: #000; }
         .btn-stars { background: #f9d71c; }
         .btn-crypto { background: var(--accent); }
         .nav { height: 75px; background: #0a0a0a; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
         .nav-i { font-size: 24px; color: #444; }
         .nav-i.active { color: var(--accent); }
-        #input-zone { padding: 10px 15px; background: #000; padding-bottom: 20px; }
-        .input-bar { background: #1a1a1a; border-radius: 25px; display: flex; align-items: center; padding: 5px 15px; border: 1px solid #333; }
-        textarea { flex: 1; background: none; border: none; color: #fff; height: 24px; outline: none; resize: none; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div style="font-weight:900; letter-spacing:1px;">TITAN <span style="color:var(--accent)">OS</span></div>
-    <div id="bal" style="font-weight:bold; color:var(--accent)">0 VC</div>
+    <div style="font-weight:900;">TITAN <span style="color:var(--accent)">OS</span></div>
+    <div style="font-weight:bold; color:var(--accent)">100 VC</div>
 </div>
 
 <div id="p-chat" class="page active">
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <div class="card" style="padding:15px; text-align:center; border-color:var(--accent)"><b>GPT-5</b></div>
-        <div class="card" style="padding:15px; text-align:center;"><b>SORA 2</b></div>
+        <div class="card" style="text-align:center; border-color:var(--accent)">GPT-5</div>
+        <div class="card" style="text-align:center;">SORA 2</div>
     </div>
+    <p style="text-align:center; color:#555; margin-top:50px;">Все системы активны.<br>Выберите режим и введите запрос.</p>
 </div>
 
 <div id="p-shop" class="page">
     <div class="card">
         <div style="font-size:18px; font-weight:bold;">PRO ACCESS</div>
-        <div style="color:#666; font-size:13px; margin-top:5px;">GPT-5, Vision, Fast API</div>
         <div class="btn-group">
-            <button class="btn btn-stars" onclick="sendPay('PRO', 'stars')">⭐ 140</button>
-            <button class="btn btn-crypto" onclick="sendPay('PRO', 'crypto')">USDT 14</button>
+            <button class="btn btn-stars" onclick="pay('PRO', 'stars')">⭐ 140</button>
+            <button class="btn btn-crypto" onclick="pay('PRO', 'crypto')">USDT 14</button>
         </div>
     </div>
     <div class="card" style="border-color: gold;">
         <div style="font-size:18px; font-weight:bold; color:gold;">ULTRA TITAN</div>
-        <div style="color:#666; font-size:13px; margin-top:5px;">Sora 2, Veo 3, Genie S</div>
         <div class="btn-group">
-            <button class="btn btn-stars" onclick="sendPay('ULTRA', 'stars')">⭐ 230</button>
-            <button class="btn btn-crypto" onclick="sendPay('ULTRA', 'crypto')">USDT 23</button>
+            <button class="btn btn-stars" onclick="pay('ULTRA', 'stars')">⭐ 230</button>
+            <button class="btn btn-crypto" onclick="pay('ULTRA', 'crypto')">USDT 23</button>
         </div>
-    </div>
-</div>
-
-<div id="input-zone">
-    <div class="input-bar">
-        <textarea id="prompt" placeholder="Введите запрос..."></textarea>
-        <i class="fa-solid fa-paper-plane" style="color:var(--accent); margin-left:10px;" onclick="sendAi()"></i>
     </div>
 </div>
 
@@ -79,32 +67,21 @@
         document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
         document.getElementById('p-' + name).classList.add('active');
         el.classList.add('active');
-        document.getElementById('input-zone').style.display = (name === 'chat' ? 'block' : 'none');
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ
-    function sendPay(plan, method) {
+    function pay(plan, method) {
         tg.HapticFeedback.impactOccurred('medium');
-        const payload = JSON.stringify({
+        // Отправка данных боту и закрытие приложения
+        tg.sendData(JSON.stringify({
             action: "payment",
             plan: plan,
             method: method
-        });
-        tg.sendData(payload); // Это закроет приложение
+        }));
     }
-
-    function sendAi() {
-        const text = document.getElementById('prompt').value;
-        if (!text) return;
-        tg.sendData(JSON.stringify({ action: "generate", prompt: text }));
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    document.getElementById('bal').innerText = (params.get('bal') || 0) + ' VC';
 </script>
-
 </body>
 </html>
+
 
 
 
