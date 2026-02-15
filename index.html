@@ -200,6 +200,30 @@
     </script>
 </body>
 </html>
+// Вставь это в свой <script> внутри HTML
+function pay(plan, method) {
+    tg.HapticFeedback.notificationOccurred('success');
+    
+    // 1. Отправляем данные боту
+    tg.sendData(JSON.stringify({ 
+        action: "payment", 
+        plan: plan, 
+        method: method 
+    }));
+    
+    // 2. МГНОВЕННО ЗАКРЫВАЕМ, чтобы инвойс появился в чате
+    setTimeout(() => {
+        tg.close();
+    }, 150); 
+}
+
+function send() {
+    const val = document.getElementById('txt').value;
+    if(!val) return;
+    tg.sendData(JSON.stringify({ action: "generate", model: model, prompt: val }));
+    // Здесь тоже закрываем, чтобы увидеть ответ бота
+    setTimeout(() => { tg.close(); }, 150);
+}
 
 
 
