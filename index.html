@@ -179,6 +179,28 @@
     
     // Остальные функции (tab, setM, send) оставляем как были
 </script>
+function pay(plan, method) {
+    tg.HapticFeedback.notificationOccurred('success');
+    
+    const data = JSON.stringify({
+        action: "payment",
+        method: method,
+        plan: plan
+    });
+
+    try {
+        // Отправляем данные боту
+        tg.sendData(data); 
+        
+        // МГНОВЕННО ЗАКРЫВАЕМ ПРИЛОЖЕНИЕ, чтобы юзер увидел счет в чате
+        setTimeout(() => {
+            tg.close();
+        }, 100); 
+        
+    } catch (e) {
+        alert("Ошибка: откройте приложение через кнопку меню/клавиатуры!");
+    }
+}
 
 
 
