@@ -153,6 +153,33 @@
     </script>
 </body>
 </html>
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready(); // Сообщаем TG что мы загрузились
+
+    function pay(plan, method) {
+        // Визуальный фидбек
+        tg.HapticFeedback.notificationOccurred('warning');
+        
+        const data = JSON.stringify({
+            action: "payment",
+            method: method,
+            plan: plan
+        });
+
+        // Пытаемся отправить данные
+        try {
+            tg.sendData(data);
+            // Если кнопка открыта через клавиатуру, приложение закроется и данные уйдут
+        } catch (e) {
+            alert("Ошибка отправки: " + e.message);
+        }
+    }
+    
+    // Остальные функции (tab, setM, send) оставляем как были
+</script>
+
 
 
 
