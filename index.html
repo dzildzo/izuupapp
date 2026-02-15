@@ -1,129 +1,101 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --accent: #00f2ff; --bg: #050505; --glass: rgba(255, 255, 255, 0.05); }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow: hidden; }
-        .app-container { height: 100vh; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        :root { --neon: #00f2ff; --bg: #050505; --card: rgba(20, 20, 25, 0.9); }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        .container { height: 100vh; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
         
-        /* Stats Card */
-        .stats-card { background: linear-gradient(135deg, #111, #1a1a1a); border: 1px solid #222; border-radius: 20px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .stats-card h2 { margin: 0; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #222; margin-bottom: 10px; }
+        .bal-val { color: var(--neon); font-size: 20px; font-weight: 800; text-shadow: 0 0 10px var(--neon); }
 
-        /* Grid System */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .grid-item { background: var(--glass); border: 1px solid #222; padding: 15px; border-radius: 15px; text-align: center; transition: 0.3s; }
-        .grid-item:active { transform: scale(0.95); background: rgba(0, 242, 255, 0.1); }
-        .grid-item i { font-size: 24px; margin-bottom: 8px; display: block; color: var(--accent); }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .model-btn { background: var(--card); border: 1px solid #222; padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 11px; transition: 0.2s; }
+        .model-btn.active { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,242,255,0.2); }
+        .model-btn i { display: block; font-size: 18px; margin-bottom: 5px; color: var(--neon); }
 
-        /* Input Area */
-        .input-box { background: #111; border-radius: 15px; padding: 10px; border: 1px solid #222; margin-top: auto; }
-        textarea { width: 100%; background: none; border: none; color: #fff; resize: none; outline: none; height: 60px; font-size: 14px; }
+        .input-area { background: var(--card); border-radius: 20px; border: 1px solid #222; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        textarea { flex-grow: 1; background: none; border: none; color: #fff; outline: none; resize: none; font-size: 14px; }
         
-        /* Navigation */
-        .nav { display: flex; justify-content: space-around; padding: 15px 0; background: #000; border-top: 1px solid #111; }
-        .nav i { font-size: 20px; color: #444; transition: 0.3s; }
-        .nav i.active { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .pay-btn { padding: 12px; border-radius: 12px; font-size: 12px; font-weight: bold; text-align: center; cursor: pointer; }
+        .btn-stars { background: #f9d71c; color: #000; }
+        .btn-crypto { background: var(--neon); color: #000; }
 
-        .btn-pay { background: var(--accent); color: #000; padding: 12px; border-radius: 12px; font-weight: bold; text-align: center; margin-top: 10px; }
-        .page { display: none; flex-direction: column; height: 100%; }
-        .active-page { display: flex; }
+        .send-btn { background: #fff; color: #000; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="stats-card">
-        <div>
-            <small style="color: #666; display: block;">WALLET</small>
-            <h2 id="bal">0 VC</h2>
-        </div>
-        <div style="text-align: right;">
-            <small style="color: #666; display: block;">RANK</small>
-            <span id="sub" style="font-weight: bold; color: #fff;">FREE</span>
-        </div>
+<div class="container">
+    <div class="header">
+        <div><small style="color:#555">BALANCE</small><div class="bal-val" id="bal">0 VC</div></div>
+        <div style="text-align:right"><small style="color:#555">CORE</small><div id="sub" style="color:var(--neon)">FREE</div></div>
     </div>
 
-    <div id="p-ai" class="page active-page">
-        <h4 style="margin: 0 0 10px 0;">SELECT ENGINE:</h4>
-        <div class="grid">
-            <div class="grid-item" onclick="setM('GPT4', this)"><i class="fa-solid fa-brain"></i>GPT-4o</div>
-            <div class="grid-item" onclick="setM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i>Claude 3.5</div>
-            <div class="grid-item" onclick="setM('VEO', this)"><i class="fa-solid fa-video"></i>Veo 3</div>
-            <div class="grid-item" onclick="setM('SORA', this)"><i class="fa-solid fa-film"></i>Sora 2</div>
-            <div class="grid-item" onclick="setM('GENIE', this)"><i class="fa-solid fa-cube"></i>Genie S</div>
-            <div class="grid-item" onclick="setM('DALL-E', this)"><i class="fa-solid fa-image"></i>DALL-E 3</div>
+    <div class="grid">
+        <div class="model-btn active" onclick="setM('GPT4', this)"><i class="fa-solid fa-brain"></i>GPT-4o</div>
+        <div class="model-btn" onclick="setM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i>Claude 3</div>
+        <div class="model-btn" onclick="setM('GEMINI', this)"><i class="fa-solid fa-gem"></i>Gemini Pro</div>
+        <div class="model-btn" onclick="setM('VEO3', this)"><i class="fa-solid fa-video"></i>Veo 3</div>
+        <div class="model-btn" onclick="setM('SORA2', this)"><i class="fa-solid fa-film"></i>Sora 2</div>
+        <div class="model-btn" onclick="setM('GENIE', this)"><i class="fa-solid fa-cube"></i>Genie S</div>
+    </div>
+
+    <div class="input-area">
+        <textarea id="prompt" placeholder="Введите ваш запрос или описание видео..."></textarea>
+        
+        <div style="font-size: 10px; color: #444; margin-top: 10px;">UPGRADE SUBSCRIPTION:</div>
+        <div class="pay-row">
+            <div class="pay-btn btn-crypto" onclick="pay('crypto', 'PRO')">PRO 14$</div>
+            <div class="pay-btn btn-crypto" onclick="pay('crypto', 'ULTRA')">ULTRA 23$</div>
+        </div>
+        <div class="pay-row" style="margin-top: 5px;">
+            <div class="pay-btn btn-stars" onclick="pay('stars', 'PRO')">PRO ⭐ 140</div>
+            <div class="pay-btn btn-stars" onclick="pay('stars', 'ULTRA')">ULTRA ⭐ 230</div>
         </div>
         
-        <div class="input-box">
-            <textarea id="prompt" placeholder="Опишите ваш запрос..."></textarea>
-            <div class="btn-pay" onclick="execute()">GENERATE SYSTEM</div>
-        </div>
-    </div>
-
-    <div id="p-shop" class="page">
-        <h3 style="text-align: center;">UPGRADE CORE</h3>
-        <div class="grid-item" onclick="pay('PRO')" style="margin-bottom: 10px; border-color: #555;">
-            <div style="color: var(--accent);">PRO ACCESS</div>
-            <div style="font-size: 20px;">14.00 USDT</div>
-        </div>
-        <div class="grid-item" onclick="pay('ULTRA')" style="border-color: var(--accent);">
-            <div style="color: var(--accent);">ULTRA TITAN</div>
-            <div style="font-size: 20px;">23.00 USDT</div>
-        </div>
-    </div>
-
-    <div class="nav">
-        <i class="fa-solid fa-microchip active" onclick="show('p-ai', this)"></i>
-        <i class="fa-solid fa-cart-shopping" onclick="show('p-shop', this)"></i>
-        <i class="fa-solid fa-user-gear" onclick="tg.showAlert('Settings V2.0 Coming Soon')"></i>
+        <div class="send-btn" onclick="send()">RUN SYSTEM ENGINE</div>
     </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    let currentModel = 'GPT4';
+    let model = 'GPT4';
 
     function setM(m, el) {
         tg.HapticFeedback.impactOccurred('light');
-        currentModel = m;
-        document.querySelectorAll('.grid-item').forEach(i => i.style.borderColor = '#222');
-        el.style.borderColor = '#00f2ff';
-    }
-
-    function show(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-        document.getElementById(id).classList.add('active-page');
+        model = m;
+        document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
     }
 
-    function execute() {
+    function pay(method, plan) {
+        tg.HapticFeedback.impactOccurred('heavy');
+        tg.sendData(`pay_${method}_${plan}`);
+    }
+
+    function send() {
         const p = document.getElementById('prompt').value;
-        if(!p) return tg.showAlert("Prompt empty!");
+        if(!p) return;
         tg.HapticFeedback.notificationOccurred('success');
-        const type = ['VEO', 'SORA', 'GENIE'].includes(currentModel) ? 'media' : 'ai';
-        tg.sendData(`${type}:${currentModel}|${p}`);
+        const type = ['VEO3', 'SORA2', 'GENIE'].includes(model) ? 'media' : 'ai';
+        tg.sendData(`${type}:${model}|${p}`);
         tg.close();
     }
 
-    function pay(plan) {
-        tg.HapticFeedback.impactOccurred('heavy');
-        tg.sendData(`pay_crypto_${plan}`);
-    }
-
-    // Parse URL data
     const u = new URLSearchParams(window.location.search);
-    document.getElementById('bal').innerText = (u.get('bal') || 100) + ' VC';
+    document.getElementById('bal').innerText = (u.get('bal') || 0) + ' VC';
     document.getElementById('sub').innerText = (u.get('sub') || 'FREE').toUpperCase();
 </script>
 </body>
 </html>
+
 
 
 
