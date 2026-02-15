@@ -6,62 +6,85 @@
     <title>PoulAI Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <style>
         :root { --bg: #0a0a0c; --card: #1c1c1e; --accent: #007AFF; --text: #fff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; overflow: hidden; }
         
+        /* Контейнеры страниц */
         .page { display: none; height: 100vh; flex-direction: column; }
-        .page.active { display: flex; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .page.active { display: flex; animation: fadeIn 0.2s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; }
+        /* Карточки и кнопки */
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; text-align: center; }
         .btn { background: var(--accent); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; font-size: 16px; font-weight: 600; margin-bottom: 10px; cursor: pointer; }
         .btn-gray { background: #2c2c2e; }
 
-        /* Профиль и Промокоды */
-        .profile-info { text-align: left; background: #252529; padding: 15px; border-radius: 15px; margin-top: 10px; border: 1px solid #444; }
-        .promo-input { display: flex; gap: 10px; margin-top: 20px; }
-        input#promo-field { background: #1c1c1e; border: 1px solid #444; color: white; padding: 12px; border-radius: 12px; flex: 1; outline: none; }
+        /* Чат */
+        #chat-window { flex-grow: 1; overflow-y: auto; padding-bottom: 150px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 12px 16px; border-radius: 15px; max-width: 80%; font-size: 15px; line-height: 1.4; }
+        .ai { background: #2c2c2e; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .user { background: var(--accent); align-self: flex-end; border-bottom-right-radius: 2px; }
+
+        /* Профиль */
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #333; }
+        .promo-box { display: flex; gap: 10px; margin-top: 15px; }
+        input { background: #1c1c1e; border: 1px solid #444; color: white; padding: 12px; border-radius: 12px; flex: 1; outline: none; }
 
         /* Навигация */
-        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; display: flex; justify-content: space-around; padding: 15px 0 25px; border-top: 1px solid #222; }
-        .nav i { color: #555; font-size: 22px; cursor: pointer; }
-        .nav i.active { color: var(--accent); }
-
-        #chat-window { flex-grow: 1; overflow-y: auto; padding-bottom: 100px; }
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f0f11; display: flex; justify-content: space-around; padding: 15px 0 30px; border-top: 1px solid #222; }
+        .nav i { color: #555; font-size: 22px; transition: 0.3s; }
+        .nav i.active { color: var(--accent); transform: scale(1.2); }
     </style>
 </head>
 <body>
 
     <div id="p-home" class="page active">
-        <div class="card">
-            <h1 id="bal-view" style="margin:0; font-size: 36px;">0 VC</h1>
-            <p style="opacity: 0.5;">Ваш баланс</p>
+        <div class="card" style="margin-top: 20px;">
+            <h1 id="bal-view" style="font-size: 42px; margin: 0;">0 VC</h1>
+            <p style="opacity: 0.5; margin-top: 5px;">Текущий баланс</p>
         </div>
-        <button class="btn" onclick="showP('chat')">Открыть Чат</button>
-        <button class="btn btn-gray" onclick="showP('shop')">Магазин</button>
+        <button class="btn" onclick="showP('chat')">🚀 Начать чат</button>
+        <button class="btn btn-gray" onclick="showP('shop')">💎 Купить VC</button>
+    </div>
+
+    <div id="p-chat" class="page">
+        <div id="chat-window">
+            <div class="msg ai">Я готов к работе. Какой у тебя вопрос?</div>
+        </div>
+        <div style="position: fixed; bottom: 100px; left: 15px; right: 15px; display: flex; gap: 10px; background: #0a0a0c; padding: 10px 0;">
+            <input type="text" id="chat-inp" placeholder="Спросить нейросеть...">
+            <button class="btn" style="width: 60px; margin:0;" onclick="sendLocalMsg()">></button>
+        </div>
+    </div>
+
+    <div id="p-shop" class="page">
+        <h2 style="text-align: center;">Маркетплейс</h2>
+        <div class="card">
+            <h3>ULTIMATE PASS</h3>
+            <p style="font-size: 14px; opacity: 0.7;">Открывает доступ к чату и всем моделям AI.</p>
+            <button class="btn" onclick="sendToBot('buy_ultimate')">2300 VC</button>
+        </div>
+        <button class="btn btn-gray" onclick="sendToBot('pay_stars')">Пополнить через Stars ⭐</button>
+        <button class="btn btn-gray" onclick="sendToBot('pay_crypto')">Пополнить через Crypto ₿</button>
     </div>
 
     <div id="p-profile" class="page">
-        <h2>Профиль</h2>
+        <h2 style="text-align: center;">Настройки профиля</h2>
+        <div class="card" style="text-align: left;">
+            <div class="info-row"><span>Имя:</span> <b id="u-name">User</b></div>
+            <div class="info-row"><span>ID:</span> <code id="u-id">0</code></div>
+            <div class="info-row"><span>Статус:</span> <b id="u-sub" style="color: #007AFF;">FREE</b></div>
+        </div>
+
         <div class="card">
-            <div class="profile-info">
-                <p>👤 Имя: <span id="prof-name">Пользователь</span></p>
-                <p>🆔 ID: <span id="prof-id">000000</span></p>
-                <p>💎 Подписка: <span id="prof-sub">Free</span></p>
+            <p style="margin: 0 0 10px 0; font-weight: 600;">Есть промокод?</p>
+            <div class="promo-box">
+                <input type="text" id="promo-inp" placeholder="Код...">
+                <button class="btn" style="width: auto; margin:0; padding: 0 20px;" onclick="claimPromo()">OK</button>
             </div>
         </div>
-
-        <h3>Активация кода</h3>
-        <div class="promo-input">
-            <input type="text" id="promo-field" placeholder="Введите промокод...">
-            <button class="btn" style="width: auto; margin:0; padding: 12px 20px;" onclick="activatePromo()">OK</button>
-        </div>
     </div>
-
-    <div id="p-chat" class="page"><h3>Чат...</h3></div>
-    <div id="p-shop" class="page"><h3>Магазин...</h3></div>
 
     <div class="nav">
         <i class="fa-solid fa-house active" onclick="showP('home')"></i>
@@ -75,41 +98,46 @@
         tg.expand();
         tg.ready();
 
-        // Данные из URL
+        // Загрузка данных
         const params = new URLSearchParams(window.location.search);
-        const sub = params.get('sub');
-        const bal = params.get('bal');
+        const bal = params.get('bal') || '0';
+        const sub = params.get('sub') || 'free';
+        const user = tg.initDataUnsafe.user || { id: 0, first_name: 'Пользователь' };
 
-        // Данные пользователя из Telegram
-        const user = tg.initDataUnsafe.user || { id: "Demo", first_name: "Гость" };
-
-        document.getElementById('bal-view').innerText = (bal || 0) + ' VC';
-        document.getElementById('prof-id').innerText = user.id;
-        document.getElementById('prof-name').innerText = user.first_name;
-        document.getElementById('prof-sub').innerText = sub === 'ultimate' ? 'ULTIMATE' : 'Free';
+        document.getElementById('bal-view').innerText = bal + ' VC';
+        document.getElementById('u-name').innerText = user.first_name;
+        document.getElementById('u-id').innerText = user.id;
+        document.getElementById('u-sub').innerText = sub.toUpperCase();
 
         function showP(id) {
             tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('p-' + id).classList.add('active');
             
-            // Подсветка иконок
+            // Анимация иконок
             document.querySelectorAll('.nav i').forEach(i => i.classList.remove('active'));
-            const icons = { home: 0, chat: 1, shop: 2, profile: 3 };
-            document.querySelectorAll('.nav i')[icons[id]].classList.add('active');
-        }
-
-        function activatePromo() {
-            const code = document.getElementById('promo-field').value.trim();
-            if(code) {
-                tg.sendData("promo:" + code);
-                tg.close(); // Закрываем, чтобы бот ответил
-            }
+            const map = { home: 0, chat: 1, shop: 2, profile: 3 };
+            document.querySelectorAll('.nav i')[map[id]].classList.add('active');
         }
 
         function sendToBot(data) {
             tg.sendData(data);
-            tg.close();
+        }
+
+        function claimPromo() {
+            const val = document.getElementById('promo-inp').value.trim();
+            if(val) {
+                tg.sendData("promo:" + val);
+            }
+        }
+
+        function sendLocalMsg() {
+            const inp = document.getElementById('chat-inp');
+            const win = document.getElementById('chat-window');
+            if(!inp.value) return;
+            win.innerHTML += `<div class="msg user">${inp.value}</div>`;
+            inp.value = "";
+            win.scrollTo(0, win.scrollHeight);
         }
     </script>
 </body>
