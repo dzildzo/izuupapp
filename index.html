@@ -6,46 +6,48 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --neon: #00f2ff; --bg: #000; }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 15px; overflow: hidden; }
-        .glass { background: rgba(20,20,25,0.8); border: 1px solid #222; border-radius: 20px; padding: 15px; margin-bottom: 10px; }
-        .bal-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon); padding-bottom: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 15px 0; }
-        .node { background: #111; border: 1px solid #222; padding: 12px 5px; border-radius: 12px; text-align: center; font-size: 10px; transition: 0.2s; }
-        .node.active { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 10px rgba(0,242,255,0.2); }
-        .node i { display: block; font-size: 18px; margin-bottom: 4px; }
-        textarea { width: 100%; height: 100px; background: #0a0a0a; border: 1px solid #222; border-radius: 15px; color: #fff; padding: 12px; box-sizing: border-box; outline: none; }
-        .btn-main { background: var(--neon); color: #000; padding: 15px; border-radius: 15px; text-align: center; font-weight: 900; margin-top: 10px; cursor: pointer; }
-        .stars-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .star-btn { background: #f9d71c; color: #000; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: bold; text-align: center; }
+        :root { --neon: #00f2ff; --bg: #050505; --card: rgba(20, 20, 25, 0.9); }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        .container { height: 100vh; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #222; margin-bottom: 10px; }
+        .bal-val { color: var(--neon); font-size: 20px; font-weight: 800; text-shadow: 0 0 10px var(--neon); }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .model-btn { background: var(--card); border: 1px solid #222; padding: 12px 5px; border-radius: 15px; text-align: center; font-size: 11px; transition: 0.2s; }
+        .model-btn.active { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 10px rgba(0,242,255,0.2); }
+        .model-btn i { display: block; font-size: 18px; margin-bottom: 5px; }
+        .input-area { background: var(--card); border-radius: 20px; border: 1px solid #222; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        textarea { flex-grow: 1; background: none; border: none; color: #fff; outline: none; resize: none; font-size: 14px; }
+        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .pay-btn { background: #f9d71c; color: #000; padding: 12px; border-radius: 12px; font-size: 12px; font-weight: bold; text-align: center; }
+        .send-btn { background: #fff; color: #000; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="glass">
-    <div class="bal-box">
-        <div><small>BALANCE</small><div id="bal" style="font-size:20px; font-weight:bold; color:var(--neon)">0 VC</div></div>
-        <div style="text-align:right"><small>CORE</small><div id="sub" style="text-transform:uppercase">FREE</div></div>
+<div class="container">
+    <div class="header">
+        <div><small style="color:#555">BALANCE</small><div class="bal-val" id="bal">0 VC</div></div>
+        <div style="text-align:right"><small style="color:#555">CORE</small><div id="sub" style="color:var(--neon)">FREE</div></div>
+    </div>
+
+    <div class="grid">
+        <div class="model-btn active" onclick="setM('GPT5', this)"><i class="fa-solid fa-brain"></i>GPT-5</div>
+        <div class="model-btn" onclick="setM('SORA2', this)"><i class="fa-solid fa-film"></i>Sora 2</div>
+        <div class="model-btn" onclick="setM('VEO3', this)"><i class="fa-solid fa-video"></i>Veo 3</div>
+        <div class="model-btn" onclick="setM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i>Claude 3</div>
+        <div class="model-btn" onclick="setM('GENIE', this)"><i class="fa-solid fa-cube"></i>Genie S</div>
+        <div class="model-btn" onclick="setM('DALL-E', this)"><i class="fa-solid fa-image"></i>DALL-E 3</div>
+    </div>
+
+    <div class="input-area">
+        <textarea id="prompt" placeholder="Введите ваш запрос..."></textarea>
+        <div class="pay-row">
+            <div class="pay-btn" onclick="pay('PRO')">PRO ⭐ 140</div>
+            <div class="pay-btn" onclick="pay('ULTRA')">ULTRA ⭐ 230</div>
+        </div>
+        <div class="send-btn" onclick="send()">RUN SYSTEM ENGINE</div>
     </div>
 </div>
-
-<div class="grid">
-    <div class="node active" onclick="setM('GPT5', this)"><i class="fa-solid fa-brain"></i>GPT-5</div>
-    <div class="node" onclick="setM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i>Claude 3.5</div>
-    <div class="node" onclick="setM('SORA2', this)"><i class="fa-solid fa-film"></i>Sora 2</div>
-    <div class="node" onclick="setM('VEO3', this)"><i class="fa-solid fa-video"></i>Veo 3</div>
-    <div class="node" onclick="setM('GENIE', this)"><i class="fa-solid fa-cube"></i>Genie S</div>
-    <div class="node" onclick="setM('DALL-E', this)"><i class="fa-solid fa-image"></i>DALL-E 3</div>
-</div>
-
-<textarea id="prompt" placeholder="Describe your request..."></textarea>
-
-<div class="stars-row">
-    <div class="star-btn" onclick="pay('PRO')">PRO ⭐ 140</div>
-    <div class="star-btn" onclick="pay('ULTRA')">ULTRA ⭐ 230</div>
-</div>
-
-<div class="btn-main" onclick="run()">EXECUTE CORE</div>
 
 <script>
     const tg = window.Telegram.WebApp;
@@ -55,7 +57,7 @@
     function setM(m, el) {
         tg.HapticFeedback.impactOccurred('light');
         model = m;
-        document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
     }
 
@@ -64,20 +66,21 @@
         tg.sendData(`pay_stars_${plan}`);
     }
 
-    function run() {
+    function send() {
         const p = document.getElementById('prompt').value;
         if(!p) return;
         tg.HapticFeedback.notificationOccurred('success');
-        tg.sendData(`${model}:${p}`);
+        tg.sendData(`${model}|${p}`);
         tg.close();
     }
 
     const u = new URLSearchParams(window.location.search);
     document.getElementById('bal').innerText = (u.get('bal') || 0) + ' VC';
-    document.getElementById('sub').innerText = (u.get('sub') || 'FREE');
+    document.getElementById('sub').innerText = (u.get('sub') || 'FREE').toUpperCase();
 </script>
 </body>
 </html>
+
 
 
 
