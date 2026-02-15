@@ -6,225 +6,158 @@
     <title>PoulAI Ultimate Console</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #050505; 
-            --card: #121214; 
-            --accent: #00d2ff; 
-            --accent-two: #3a7bd5;
+            --bg: #050505; --card: #121214; --accent: #00d2ff; 
             --grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); 
-            --glass: rgba(255, 255, 255, 0.03);
+            --glass: rgba(255, 255, 255, 0.05);
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: 'Inter', sans-serif; background: var(--bg); color: white; 
-            margin: 0; padding: 0; overflow: hidden; height: 100vh;
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
 
         .page { display: none; height: 100vh; flex-direction: column; padding: 20px; padding-bottom: 100px; overflow-y: auto; }
-        .active { display: flex; animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes slideIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* HEADER */
-        .balance-section {
-            background: var(--grad); border-radius: 30px; padding: 30px 20px;
-            text-align: center; margin-bottom: 25px; box-shadow: 0 10px 40px rgba(0, 210, 255, 0.3);
-            position: relative; overflow: hidden;
-        }
-        .balance-section::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 10s linear infinite;
-        }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .balance-card { background: var(--grad); border-radius: 25px; padding: 25px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2); }
 
         /* BUTTONS */
-        .action-btn {
-            background: var(--card); border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px; border-radius: 22px; width: 100%; color: white;
-            font-weight: 600; margin-bottom: 15px; display: flex; 
-            align-items: center; justify-content: space-between; transition: 0.3s;
-        }
-        .action-btn:active { transform: translateY(2px); background: #1a1a1c; border-color: var(--accent); }
-        .action-btn i { font-size: 20px; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn { background: var(--card); border: 1px solid var(--glass); padding: 18px; border-radius: 20px; width: 100%; color: white; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 
-        /* CHAT WINDOW */
-        #chat-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
-        .bubble { padding: 14px 18px; border-radius: 20px; max-width: 85%; font-size: 14px; line-height: 1.5; animation: pop 0.3s ease; }
-        @keyframes pop { from { opacity: 0; transform: translateY(10px); } }
-        .ai { background: var(--glass); border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
-        .user { background: var(--grad); color: black; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
+        /* CHAT */
+        #chat-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px 0; }
+        .bubble { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; }
+        .ai { background: var(--glass); align-self: flex-start; }
+        .user { background: var(--grad); color: black; align-self: flex-end; font-weight: 600; }
 
-        .input-bar {
-            position: fixed; bottom: 85px; left: 15px; right: 15px;
-            display: flex; gap: 10px; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); padding: 10px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .input-bar input { background: transparent; border: none; color: white; flex: 1; padding: 10px; outline: none; }
+        .input-area { position: fixed; bottom: 85px; left: 15px; right: 15px; display: flex; gap: 8px; background: #0a0a0c; padding: 8px; border-radius: 25px; border: 1px solid var(--glass); align-items: center; }
+        .input-area input { background: transparent; border: none; color: white; flex: 1; padding: 8px; outline: none; }
+        .input-area i { font-size: 20px; color: #666; cursor: pointer; padding: 0 5px; }
 
-        /* SHOP CARDS */
-        .plan-card {
-            background: var(--card); border: 1px solid #222; padding: 20px; 
-            border-radius: 25px; margin-bottom: 15px; transition: 0.3s; border-left: 5px solid transparent;
-        }
-        .plan-card.pro { border-left-color: var(--accent); }
-        .plan-card.ultra { border-left-color: #f9d71c; }
-        .price { background: #fff; color: #000; padding: 4px 12px; border-radius: 10px; font-weight: 800; font-size: 14px; }
+        /* MODAL */
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal { background: #1a1a1c; border-radius: 25px; padding: 25px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--accent); }
 
-        /* NAVIGATION */
-        .nav {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 75px;
-            background: rgba(10,10,12,0.95); backdrop-filter: blur(20px);
-            display: flex; justify-content: space-around; align-items: center;
-            border-top: 1px solid rgba(255,255,255,0.05); z-index: 1000;
-        }
-        .nav-item { color: #555; font-size: 20px; transition: 0.3s; position: relative; }
-        .nav-item.active { color: var(--accent); transform: translateY(-5px); }
-        .nav-item.active::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+        /* NAV */
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: rgba(10,10,12,0.9); backdrop-filter: blur(15px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--glass); }
+        .nav-item { color: #444; font-size: 22px; transition: 0.3s; }
+        .nav-item.active { color: var(--accent); }
 
+        .promo-box { background: var(--card); padding: 15px; border-radius: 20px; margin-top: 20px; border: 1px dashed var(--accent); }
     </style>
 </head>
 <body>
 
-    <div id="home" class="page active">
-        <div class="balance-section">
-            <span style="opacity: 0.7; font-size: 12px; font-weight: 800; letter-spacing: 1px;">TOTAL ASSETS</span>
-            <h1 id="user-balance" style="font-size: 48px; margin: 5px 0;">0 VC</h1>
-            <div id="user-sub-badge" style="display:inline-block; padding: 5px 15px; background: rgba(0,0,0,0.2); border-radius: 20px; font-size: 12px;">FREE ACCOUNT</div>
+    <div id="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-title">Выбрать способ</h3>
+            <button class="btn" style="border-color: #f9d71c;" onclick="confirmPay('stars')"><span>Telegram Stars</span> <i class="fa-solid fa-star" style="color:#f9d71c"></i></button>
+            <button class="btn" style="border-color: #00d2ff;" onclick="confirmPay('crypto')"><span>Crypto Bot</span> <i class="fa-solid fa-coins"></i></button>
+            <button class="btn" style="background: transparent; border: none;" onclick="closeModal()">Отмена</button>
         </div>
-
-        <button class="action-btn" onclick="showP('chat')">
-            <div>
-                <div style="font-size: 16px;">AI Intelligence</div>
-                <div style="font-size: 11px; opacity: 0.5;">Запустить нейронную сеть</div>
-            </div>
-            <i class="fa-solid fa-brain"></i>
-        </button>
-
-        <button class="action-btn" onclick="showP('shop')">
-            <div>
-                <div style="font-size: 16px;">Deposit Funds</div>
-                <div style="font-size: 11px; opacity: 0.5;">Пополнить баланс через Stars/Crypto</div>
-            </div>
-            <i class="fa-solid fa-bolt-lightning"></i>
-        </button>
     </div>
 
-    <div id="chat" class="page">
+    <div id="p-home" class="page active">
+        <div class="balance-card">
+            <p style="margin:0; opacity:0.6; font-size: 12px;">AVAILABLE BALANCE</p>
+            <h1 id="b-val" style="font-size: 45px; margin: 5px 0;">0 VC</h1>
+            <span id="s-tag" style="background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:10px; font-size:11px;">FREE</span>
+        </div>
+        <button class="btn" onclick="showP('chat')"><span>AI Chat Console</span> <i class="fa-solid fa-terminal"></i></button>
+        <button class="btn" onclick="showP('shop')"><span>Upgrade Status</span> <i class="fa-solid fa-crown"></i></button>
+        
+        <div class="promo-box">
+            <input type="text" id="promo-in" placeholder="Введите промокод" style="background:transparent; border:none; color:white; width:100%; outline:none; margin-bottom:10px;">
+            <button class="btn" style="background:var(--accent); color:black; margin:0; padding:10px;" onclick="sendPromo()">Активировать</button>
+        </div>
+    </div>
+
+    <div id="p-chat" class="page">
         <div id="chat-content">
-            <div class="bubble ai">Система готова к работе. Задайте любой вопрос вашему ИИ ассистенту.</div>
+            <div class="bubble ai">Консоль активна. Вы можете отправить текст или файл для анализа.</div>
         </div>
-        <div class="input-bar">
-            <input type="text" id="ai-input" placeholder="Спросите о чем угодно...">
-            <button onclick="handleSendAI()" style="background: var(--grad); border:none; width:45px; height:45px; border-radius:50%; color:black;">
-                <i class="fa-solid fa-arrow-up"></i>
-            </button>
+        <div class="input-area">
+            <i class="fa-solid fa-paperclip" onclick="tg.showAlert('Функция загрузки файлов будет доступна после настройки Storage')"></i>
+            <input type="text" id="ai-in" placeholder="Сообщение...">
+            <i class="fa-solid fa-circle-arrow-up" style="color:var(--accent)" onclick="askAI()"></i>
         </div>
     </div>
 
-    <div id="shop" class="page">
-        <h2 style="margin-top:0;">Premium Plans</h2>
-        
-        <div class="plan-card pro" onclick="sendAction('buy_pro')">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>PRO ACCESS</b> <span class="price">1400 VC</span>
-            </div>
-            <p style="font-size:12px; opacity:0.6;">Модель Gemini Flash. Идеально для простых задач.</p>
+    <div id="p-shop" class="page">
+        <h2>Магазин</h2>
+        <div class="btn" onclick="openPayModal('PRO', 1400)">
+            <div><b>Тариф PRO</b><br><small style="opacity:0.5">Gemini Flash</small></div>
+            <span style="background:var(--accent); color:black; padding:4px 8px; border-radius:8px;">1400 VC</span>
         </div>
-
-        <div class="plan-card ultra" onclick="sendAction('buy_ultimate')">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="color:#f9d71c">ULTIMATE AI</b> <span class="price" style="background:#f9d71c">2300 VC</span>
-            </div>
-            <p style="font-size:12px; opacity:0.6;">Модель Gemini Pro. Творчество, код и анализ данных.</p>
+        <div class="btn" onclick="openPayModal('ULTRA', 2300)">
+            <div><b>Тариф ULTRA</b><br><small style="opacity:0.5">Gemini Pro</small></div>
+            <span style="background:#f9d71c; color:black; padding:4px 8px; border-radius:8px;">2300 VC</span>
         </div>
-
-        <h2 style="margin-top:20px;">Add Balance</h2>
-        
-        <button class="action-btn" style="border: 1px solid #f9d71c;" onclick="payWithStars()">
-            <span>Pay with Telegram Stars</span>
-            <i class="fa-solid fa-star" style="color:#f9d71c; -webkit-text-fill-color: initial;"></i>
-        </button>
-
-        <button class="action-btn" style="border: 1px solid #00d2ff;" onclick="sendAction('pay_crypto')">
-            <span>Pay with Crypto Bot</span>
-            <i class="fa-solid fa-coins"></i>
-        </button>
     </div>
 
     <div class="nav">
-        <div class="nav-item active" onclick="showP('home')"><i class="fa-solid fa-house"></i></div>
-        <div class="nav-item" onclick="showP('chat')"><i class="fa-solid fa-message"></i></div>
-        <div class="nav-item" onclick="showP('shop')"><i class="fa-solid fa-cart-shopping"></i></div>
+        <div class="nav-item active" onclick="showP('home')"><i class="fa-solid fa-gauge-high"></i></div>
+        <div class="nav-item" onclick="showP('chat')"><i class="fa-solid fa-comment-dots"></i></div>
+        <div class="nav-item" onclick="showP('shop')"><i class="fa-solid fa-basket-shopping"></i></div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation();
 
-        // Инициализация данных из URL
-        const params = new URLSearchParams(window.location.search);
-        const balance = params.get('bal') || '0';
-        const sub = params.get('sub') || 'free';
-
-        document.getElementById('user-balance').innerText = balance + ' VC';
-        document.getElementById('user-sub-badge').innerText = sub.toUpperCase() + ' ACCOUNT';
+        let selectedPlan = '';
 
         function showP(id) {
-            tg.HapticFeedback.impactOccurred('medium');
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            // Навигация
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            const map = {home: 0, chat: 1, shop: 2};
-            document.querySelectorAll('.nav-item')[map[id]].classList.add('active');
-        }
-
-        function sendAction(data) {
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.sendData(data);
-            tg.close();
-        }
-
-        // ОПЛАТА STARS (Эмуляция счета)
-        function payWithStars() {
-            tg.HapticFeedback.selectionChanged();
-            // В реальном боте здесь должен быть вызов создания инвойса. 
-            // Пока мы отправляем команду боту, чтобы он прислал инвойс в чат.
-            tg.sendData("pay_stars");
-            tg.close();
-        }
-
-        function handleSendAI() {
-            const input = document.getElementById('ai-input');
-            const chat = document.getElementById('chat-content');
-            if(!input.value) return;
-
             tg.HapticFeedback.impactOccurred('light');
-            
-            // Добавляем сообщение юзера
-            const userDiv = document.createElement('div');
-            userDiv.className = 'bubble user';
-            userDiv.innerText = input.value;
-            chat.appendChild(userDiv);
-
-            // Отправляем данные боту
-            const msg = input.value;
-            input.value = '';
-            chat.scrollTop = chat.scrollHeight;
-
-            // Небольшая задержка для реализма и закрываем для ответа бота в чате
-            setTimeout(() => {
-                tg.sendData("msg:" + msg);
-                tg.close();
-            }, 600);
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('p-' + id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach((it, idx) => {
+                it.classList.toggle('active', ['home', 'chat', 'shop'][idx] === id);
+            });
         }
 
-        // Установка темы под Telegram
-        document.documentElement.style.setProperty('--accent', tg.themeParams.button_color || '#00d2ff');
+        // РАБОТА С МОДАЛКОЙ
+        function openPayModal(plan, price) {
+            selectedPlan = plan;
+            document.getElementById('modal-title').innerText = `Купить ${plan}`;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        function confirmPay(method) {
+            tg.HapticFeedback.notificationOccurred('success');
+            // Мы НЕ закрываем приложение, просто отправляем данные
+            tg.sendData(`pay_${method}_${selectedPlan}`);
+            closeModal();
+            tg.showAlert(`Запрос на оплату ${selectedPlan} отправлен в чат!`);
+        }
+
+        function askAI() {
+            const inp = document.getElementById('ai-in');
+            if(!inp.value) return;
+            const chat = document.getElementById('chat-content');
+            chat.innerHTML += `<div class="bubble user">${inp.value}</div>`;
+            tg.sendData("msg:" + inp.value);
+            inp.value = '';
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendPromo() {
+            const val = document.getElementById('promo-in').value;
+            if(val) {
+                tg.sendData("promo:" + val);
+                tg.showAlert("Промокод отправлен на проверку!");
+                document.getElementById('promo-in').value = '';
+            }
+        }
+
+        // Синхронизация данных
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('b-val').innerText = (params.get('bal') || '0') + ' VC';
+        document.getElementById('s-tag').innerText = (params.get('sub') || 'free').toUpperCase();
     </script>
 </body>
 </html>
