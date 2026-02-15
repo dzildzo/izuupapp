@@ -3,136 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PoulAI Ultra</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --accent: #00f2ff; --bg: #050505; --card: #111114; }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+        :root { --primary: #00d2ff; --bg: #000000; --card: #141414; --text: #ffffff; }
+        body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header { padding: 20px; background: var(--card); border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-        .page { display: none; flex: 1; padding: 20px; overflow-y: auto; box-sizing: border-box; }
-        .active { display: block; }
+        /* HEADER */
+        .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; background: rgba(20,20,20,0.9); backdrop-filter: blur(10px); }
+        .balance-badge { background: linear-gradient(45deg, #00d2ff, #005bea); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(0,210,255,0.4); }
 
-        /* Чат и Нейронки */
-        .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .model-card { background: #1a1a1f; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 10px; }
-        .model-card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
-        .model-card i { color: var(--accent); font-size: 20px; }
+        /* CONTENT PAGES */
+        .page { flex: 1; overflow-y: auto; display: none; padding: 20px; padding-bottom: 90px; }
+        .page.active { display: block; }
 
-        /* Ввод */
-        .input-container { position: sticky; bottom: 0; background: var(--bg); padding: 15px; border-top: 1px solid #222; }
-        .input-wrapper { background: #1a1a1f; border-radius: 20px; padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
-        textarea { flex: 1; background: none; border: none; color: #fff; outline: none; height: 24px; font-size: 14px; }
+        /* GRID FOR AI MODELS */
+        .ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .ai-card { background: var(--card); border: 1px solid #333; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; cursor: pointer; }
+        .ai-card.selected { border-color: var(--primary); background: rgba(0, 210, 255, 0.1); }
+        .ai-card i { font-size: 24px; color: #888; }
+        .ai-card.selected i { color: var(--primary); }
+        .ai-name { font-size: 12px; font-weight: 600; }
 
-        /* Профиль */
-        .profile-card { background: linear-gradient(135deg, #111, #1a1a1f); border: 1px solid #222; padding: 25px; border-radius: 25px; text-align: center; }
-        .vc-balance { font-size: 32px; font-weight: 900; color: var(--accent); margin: 10px 0; }
+        /* SHOP CARDS (IMPORTANT!) */
+        .shop-card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; position: relative; overflow: hidden; }
+        .shop-card.ultra { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+        .plan-title { font-size: 22px; font-weight: 900; margin-bottom: 5px; }
+        .plan-desc { color: #888; font-size: 13px; margin-bottom: 15px; }
+        
+        .pay-buttons { display: flex; gap: 10px; }
+        .btn-pay { flex: 1; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: bold; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+        .btn-stars { background: #f9d71c; color: #000; }
+        .btn-crypto { background: #00d2ff; color: #000; }
+        .btn-pay:active { transform: scale(0.96); opacity: 0.8; }
 
-        /* Навигация */
-        .navbar { height: 70px; background: #0a0a0c; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; }
-        .nav-item { color: #444; text-align: center; font-size: 11px; }
-        .nav-item.active { color: var(--accent); }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+        /* INPUT AREA */
+        .input-dock { position: fixed; bottom: 70px; left: 0; width: 100%; padding: 10px; box-sizing: border-box; background: linear-gradient(to top, #000, transparent); pointer-events: none; }
+        .input-bar { pointer-events: auto; background: #1a1a1a; border-radius: 25px; display: flex; align-items: center; padding: 5px 15px; border: 1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .attach-btn { color: #888; font-size: 20px; padding: 10px; }
+        textarea { flex: 1; background: transparent; border: none; color: white; padding: 10px; height: 24px; resize: none; outline: none; font-size: 16px; }
+        .send-btn { color: var(--primary); font-size: 20px; padding: 10px; }
 
-        .btn-pay { background: var(--accent); color: #000; padding: 15px; border-radius: 15px; font-weight: bold; text-align: center; margin-top: 10px; }
+        /* BOTTOM NAVIGATION */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 65px; background: #111; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #666; font-size: 10px; width: 60px; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 22px; }
+
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div style="font-weight: 900; letter-spacing: 1px;">POULAI <span style="color:var(--accent)">TITAN</span></div>
-    <div onclick="tg.close()"><i class="fa-solid fa-xmark"></i></div>
-</div>
-
-<div id="page-chat" class="page active">
-    <div class="model-grid">
-        <div class="model-card active" onclick="selM('GPT-5', this)"><i class="fa-solid fa-brain"></i> GPT-5</div>
-        <div class="model-card" onclick="selM('SORA-2', this)"><i class="fa-solid fa-video"></i> Sora 2</div>
-        <div class="model-card" onclick="selM('VEO-3', this)"><i class="fa-solid fa-film"></i> Veo 3</div>
-        <div class="model-card" onclick="selM('GENIE', this)"><i class="fa-solid fa-cube"></i> Genie S</div>
-        <div class="model-card" onclick="selM('CLAUDE', this)"><i class="fa-solid fa-bolt"></i> Claude 3.5</div>
-        <div class="model-card" onclick="selM('MIDJOURNEY', this)"><i class="fa-solid fa-image"></i> MJ v6</div>
+    <div class="header">
+        <div style="font-weight: 800; font-size: 18px;">POUL<span style="color:var(--primary)">AI</span></div>
+        <div class="balance-badge" id="display-bal">0 VC</div>
     </div>
-    <div id="chat-messages" style="font-size: 14px; color: #aaa;">
-        Система готова к генерации. Выберите модель и введите запрос...
+
+    <div id="p-chat" class="page active">
+        <h3 style="color:#666; font-size:12px; margin-bottom:10px;">NEURAL ENGINE</h3>
+        <div class="ai-grid">
+            <div class="ai-card selected" onclick="selectModel('GPT-5', this)">
+                <i class="fa-solid fa-brain"></i>
+                <span class="ai-name">GPT-5</span>
+            </div>
+            <div class="ai-card" onclick="selectModel('SORA-2', this)">
+                <i class="fa-solid fa-video"></i>
+                <span class="ai-name">SORA 2</span>
+            </div>
+            <div class="ai-card" onclick="selectModel('VEO-3', this)">
+                <i class="fa-solid fa-film"></i>
+                <span class="ai-name">VEO 3</span>
+            </div>
+            <div class="ai-card" onclick="selectModel('GENIE', this)">
+                <i class="fa-solid fa-cube"></i>
+                <span class="ai-name">GENIE 3D</span>
+            </div>
+            <div class="ai-card" onclick="selectModel('MJ-V6', this)">
+                <i class="fa-solid fa-palette"></i>
+                <span class="ai-name">MJ v6</span>
+            </div>
+            <div class="ai-card" onclick="selectModel('CLAUDE', this)">
+                <i class="fa-solid fa-bolt"></i>
+                <span class="ai-name">CLAUDE 3</span>
+            </div>
+        </div>
+        
+        <div style="text-align:center; color:#444; font-size:12px; margin-top:20px;">
+            Система готова. Выберите модель и введите запрос.
+        </div>
     </div>
-</div>
 
-<div id="page-wallet" class="page">
-    <div class="profile-card">
-        <img id="u-photo" src="https://via.placeholder.com/80" style="border-radius: 50%; border: 2px solid var(--accent);">
-        <h2 id="u-name" style="margin: 10px 0 5px 0;">User</h2>
-        <div id="u-sub" style="font-size: 12px; color: #555;">FREE ACCOUNT</div>
-        <div class="vc-balance" id="u-bal">0 VC</div>
+    <div id="p-market" class="page">
+        <h2 style="margin-bottom: 20px;">Store</h2>
+
+        <div class="shop-card">
+            <div class="plan-title">PRO CORE</div>
+            <div class="plan-desc">GPT-5, Быстрая генерация, Доступ к файлам</div>
+            <div class="pay-buttons">
+                <div class="btn-pay btn-stars" onclick="pay('PRO', 'stars')">
+                    <i class="fa-solid fa-star"></i> 140
+                </div>
+                <div class="btn-pay btn-crypto" onclick="pay('PRO', 'crypto')">
+                    <i class="fa-brands fa-usdt"></i> 14.0
+                </div>
+            </div>
+        </div>
+
+        <div class="shop-card ultra">
+            <div class="plan-title" style="color:#ffd700">ULTRA TITAN</div>
+            <div class="plan-desc">Sora 2 Video, Veo 3, Genie 3D, Приоритет</div>
+            <div class="pay-buttons">
+                <div class="btn-pay btn-stars" onclick="pay('ULTRA', 'stars')">
+                    <i class="fa-solid fa-star"></i> 230
+                </div>
+                <div class="btn-pay btn-crypto" onclick="pay('ULTRA', 'crypto')">
+                    <i class="fa-brands fa-usdt"></i> 23.0
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <h3 style="margin-top: 30px;">Upgrade System</h3>
-    <div class="model-card" onclick="openBuy('PRO')">
-        <div style="flex:1"><b>PRO CORE</b><br><small>14.00 USDT / 140 Stars</small></div>
-        <i class="fa-solid fa-chevron-right"></i>
+
+    <div id="p-profile" class="page">
+        <div style="text-align:center; margin-top:30px;">
+            <i class="fa-solid fa-user-astronaut" style="font-size: 60px; color: #333; border: 2px solid #333; padding: 20px; border-radius: 50%;"></i>
+            <h2 id="user-name" style="margin-top:10px;">Pilot</h2>
+            <div id="user-sub" style="color:var(--primary)">FREE ACCOUNT</div>
+        </div>
     </div>
-    <div class="model-card" onclick="openBuy('ULTRA')" style="margin-top:10px; border-color: var(--accent);">
-        <div style="flex:1"><b>ULTRA TITAN</b><br><small>23.00 USDT / 230 Stars</small></div>
-        <i class="fa-solid fa-crown"></i>
+
+    <div class="input-dock" id="input-ui">
+        <div class="input-bar">
+            <div class="attach-btn" onclick="tg.showAlert('Для анализа файлов отправьте их прямо в чат бота (не в Mini App)! Я их увижу.')">
+                <i class="fa-solid fa-paperclip"></i>
+            </div>
+            <textarea id="prompt-in" placeholder="Запрос к ИИ..."></textarea>
+            <div class="send-btn" onclick="sendAi()">
+                <i class="fa-solid fa-paper-plane"></i>
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="input-container" id="input-bar">
-    <div class="input-wrapper">
-        <i class="fa-solid fa-paperclip" onclick="tg.showAlert('Прикрепите файл в чате бота!')"></i>
-        <textarea id="main-input" placeholder="Введите запрос..."></textarea>
-        <i class="fa-solid fa-paper-plane" style="color: var(--accent);" onclick="fire()"></i>
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="tab('chat', this)">
+            <i class="fa-solid fa-terminal"></i>
+            <span>Terminal</span>
+        </div>
+        <div class="nav-item" onclick="tab('market', this)">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span>Market</span>
+        </div>
+        <div class="nav-item" onclick="tab('profile', this)">
+            <i class="fa-regular fa-id-card"></i>
+            <span>Profile</span>
+        </div>
     </div>
-</div>
 
-<div class="navbar">
-    <div class="nav-item active" onclick="nav('chat', this)"><i class="fa-solid fa-comment-dots"></i>CHAT</div>
-    <div class="nav-item" onclick="nav('wallet', this)"><i class="fa-solid fa-wallet"></i>WALLET</div>
-</div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        // Включаем темную тему принудительно для статуса
+        tg.setHeaderColor('#141414');
+        tg.setBackgroundColor('#000000');
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.backgroundColor = "#050505";
-    tg.headerColor = "#111114";
+        let currentModel = 'GPT-5';
 
-    let selectedModel = 'GPT-5';
+        // Инициализация данных из URL
+        const params = new URLSearchParams(window.location.search);
+        const bal = params.get('bal') || '0';
+        const sub = params.get('sub') || 'FREE';
+        
+        document.getElementById('display-bal').innerText = bal + ' VC';
+        document.getElementById('user-sub').innerText = sub.toUpperCase() + ' PLAN';
+        if(tg.initDataUnsafe.user) {
+            document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
+        }
 
-    function nav(p, el) {
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-        document.getElementById('page-' + p).classList.add('active');
-        el.classList.add('active');
-        document.getElementById('input-bar').style.display = (p === 'chat' ? 'block' : 'none');
-    }
+        // Логика Табов
+        function tab(name, el) {
+            tg.HapticFeedback.impactOccurred('light');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('p-' + name).classList.add('active');
+            el.classList.add('active');
 
-    function selM(m, el) {
-        tg.HapticFeedback.impactOccurred('light');
-        selectedModel = m;
-        document.querySelectorAll('.model-card').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-    }
+            // Скрываем инпут если не чат
+            document.getElementById('input-ui').style.display = (name === 'chat') ? 'block' : 'none';
+        }
 
-    function fire() {
-        const txt = document.getElementById('main-input').value;
-        if(!txt) return;
-        tg.sendData(JSON.stringify({ type: 'generate', model: selectedModel, prompt: txt }));
-        tg.close();
-    }
+        // Выбор модели
+        function selectModel(name, el) {
+            tg.HapticFeedback.selectionChanged();
+            currentModel = name;
+            document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
 
-    function openBuy(plan) {
-        const method = confirm(`Оплатить ${plan} через Stars? (ОК - Stars, Отмена - Crypto)`) ? 'stars' : 'crypto';
-        tg.sendData(JSON.stringify({ type: 'pay', plan: plan, method: method }));
-    }
+        // ГЕНЕРАЛЬНАЯ ФУНКЦИЯ ОПЛАТЫ (ВОТ ОНА!)
+        function pay(plan, method) {
+            tg.HapticFeedback.notificationOccurred('warning');
+            // Отправляем JSON объект
+            const data = {
+                action: "payment",
+                method: method, // 'stars' или 'crypto'
+                plan: plan      // 'PRO' или 'ULTRA'
+            };
+            tg.sendData(JSON.stringify(data));
+        }
 
-    // Инициализация данных
-    const u = new URLSearchParams(window.location.search);
-    document.getElementById('u-bal').innerText = (u.get('bal') || 0) + ' VC';
-    document.getElementById('u-sub').innerText = (u.get('sub') || 'FREE') + ' ACCOUNT';
-    document.getElementById('u-name').innerText = tg.initDataUnsafe.user?.first_name || 'Pilot';
-</script>
+        // Отправка запроса ИИ
+        function sendAi() {
+            const txt = document.getElementById('prompt-in').value;
+            if(!txt) return;
+            tg.HapticFeedback.notificationOccurred('success');
+            
+            const data = {
+                action: "generate",
+                model: currentModel,
+                prompt: txt
+            };
+            tg.sendData(JSON.stringify(data));
+            tg.close();
+        }
+    </script>
 </body>
 </html>
+
 
 
 
