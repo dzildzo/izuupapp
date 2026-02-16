@@ -2,220 +2,161 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TITAN CORE OS</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TITAN CORE v4.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <style>
-        :root {
-            --cyan: #00f3ff;
-            --pink: #ff00ff;
-            --bg: #050505;
-            --glass: rgba(255, 255, 255, 0.05);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; height: 100vh; overflow: hidden; }
-
-        /* Фоновые эффекты */
-        .scanline { position: fixed; inset: 0; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 50%); background-size: 100% 4px; z-index: 10; pointer-events: none; opacity: 0.1; }
-
-        /* Панель управления */
-        .glass-panel { background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-
-        /* Шапка */
-        .header { height: 180px; position: relative; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 0 0 25px 25px; overflow: hidden; }
-        #canvas-3d { position: absolute; inset: 0; z-index: 0; opacity: 0.6; }
-        .top-info { position: relative; z-index: 1; display: flex; justify-content: space-between; font-family: monospace; font-size: 10px; color: var(--cyan); }
-
-        /* Контент */
-        .content { height: calc(100vh - 260px); overflow-y: auto; padding: 20px; }
+        :root { --cyan: #00f3ff; --pink: #ff00ff; --bg: #050505; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #fff; overflow: hidden; height: 100vh; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+        
+        /* Header */
+        .header { height: 160px; padding: 20px; position: relative; overflow: hidden; }
+        #canvas-3d { position: absolute; inset: 0; opacity: 0.5; }
+        
+        /* Viewport */
+        .viewport { height: calc(100vh - 240px); overflow-y: auto; padding: 15px; padding-bottom: 100px; }
         .view { display: none; }
         .view.active { display: block; }
 
-        /* Кнопки и Карточки */
-        .card { padding: 15px; margin-bottom: 12px; transition: 0.3s; cursor: pointer; }
-        .card.active { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        /* Grid for 15 AI Models */
+        .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .ai-card { padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-size: 12px; display: flex; align-items: center; gap: 10px; opacity: 0.7; }
+        .ai-card.active { border-color: var(--cyan); background: rgba(0, 243, 255, 0.1); opacity: 1; box-shadow: 0 0 15px rgba(0,243,255,0.2); }
+        .ai-card i { font-size: 16px; color: var(--cyan); }
+
+        /* Bottom Nav */
+        .nav { position: fixed; bottom: 20px; left: 15px; right: 15px; height: 70px; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-btn { color: rgba(255,255,255,0.3); font-size: 22px; transition: 0.3s; }
+        .nav-btn.active { color: var(--cyan); transform: translateY(-5px); }
         
-        .pay-btn { 
-            width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; 
-            margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; 
-        }
-
-        /* Ачивки */
-        .ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .ach-item { text-align: center; opacity: 0.2; filter: grayscale(1); transition: 0.5s; }
-        .ach-item.unlocked { opacity: 1; filter: grayscale(0); color: var(--cyan); }
-
-        /* Навигация */
-        .nav { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 65px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-i { font-size: 20px; color: rgba(255,255,255,0.2); transition: 0.3s; }
-        .nav-i.active { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
-
-        /* Загрузка */
-        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .bar { width: 150px; height: 2px; background: #222; margin-top: 10px; }
-        .fill { height: 100%; background: var(--cyan); width: 0%; }
+        .pay-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
-    <div class="scanline"></div>
-    
-    <div id="loader">
-        <h2 style="letter-spacing: 8px;">TITAN CORE</h2>
-        <div class="bar"><div class="fill"></div></div>
+    <div id="loader" style="position:fixed; inset:0; background:#000; z-index:10000; display:flex; align-items:center; justify-content:center;">
+        <h1 style="letter-spacing:10px; color:var(--cyan);">TITAN CORE</h1>
     </div>
 
-    <div class="header glass-panel">
+    <div class="header glass">
         <div id="canvas-3d"></div>
-        <div class="top-info">
-            <span id="node-id">NODE: CONNECTING...</span>
-            <span id="balance-display" style="font-weight: bold;">CREDITS: 0</span>
-        </div>
-        <div style="position: relative; z-index: 1;">
-            <p style="font-size: 10px; opacity: 0.5;">BIOMETRIC AUTHENTICATED</p>
-            <h1 id="user-title" style="font-size: 28px;">USER_NAME</h1>
+        <div style="position:relative; z-index:1;">
+            <div style="display:flex; justify-content:space-between; font-family:monospace; font-size:10px;">
+                <span id="user-id">ID: 000000</span>
+                <span id="balance" style="color:var(--cyan)">CREDITS: 0</span>
+            </div>
+            <h2 id="user-name" style="margin-top:20px; font-size:24px;">UNIT_NAME</h2>
         </div>
     </div>
 
-    <div class="content">
-        <div id="chat" class="view active">
-            <div class="card glass-panel active" onclick="App.setModel('GPT-5', this)">
-                <i class="fa-solid fa-brain"></i> GPT-5 OMNI <small>(FAST)</small>
-            </div>
-            <div class="card glass-panel" onclick="App.setModel('CLAUDE', this)">
-                <i class="fa-solid fa-bolt"></i> CLAUDE 3.5 <small>(PRO)</small>
-            </div>
-            <div class="glass-panel" style="padding: 10px; display: flex; margin-top: 20px;">
-                <input type="text" id="prompt" placeholder="Enter command..." style="flex:1; background:none; border:none; color:#fff; outline:none; padding:10px;">
-                <button onclick="App.send()" style="background:var(--cyan); border:none; width:40px; border-radius:10px;"><i class="fa-solid fa-arrow-up"></i></button>
+    <div class="viewport">
+        <div id="view-ai" class="view active">
+            <h4 style="opacity:0.5; font-size:10px; letter-spacing:2px;">SELECT NEURAL LINK (15 MODELS AVAILABLE)</h4>
+            <div class="ai-grid" id="ai-selector">
+                </div>
+            <div class="glass" style="margin-top:20px; padding:10px; display:flex;">
+                <input type="text" id="prompt" placeholder="Write your command..." style="flex:1; background:none; border:none; color:#fff; outline:none; padding:10px;">
+                <button onclick="App.send()" style="background:var(--cyan); border:none; width:45px; border-radius:12px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
 
-        <div id="profile" class="view">
-            <h3 style="margin-bottom:15px;">RECHARGE SYSTEM</h3>
-            <button class="pay-btn" style="background:#ffd700; color:#000;" onclick="App.pay('stars')">
-                <i class="fa-solid fa-star"></i> TELEGRAM STARS
-            </button>
-            <button class="pay-btn" style="background:#00a3ff; color:#fff;" onclick="App.pay('crypto')">
-                <i class="fa-solid fa-wallet"></i> CRYPTO BOT
-            </button>
-            <button class="pay-btn" style="background:#fff; color:#003087;" onclick="App.pay('paypal')">
-                <i class="fa-brands fa-paypal"></i> PAYPAL
-            </button>
-        </div>
-
-        <div id="ach" class="view">
-            <h3>ACHIEVEMENTS</h3>
-            <div class="ach-grid" style="margin-top: 20px;">
-                <div class="ach-item glass-panel card" id="ach-boot"><i class="fa-solid fa-power-off"></i><p>Boot</p></div>
-                <div class="ach-item glass-panel card" id="ach-pro"><i class="fa-solid fa-crown"></i><p>Titan Pro</p></div>
+        <div id="view-pay" class="view">
+            <h3>RECHARGE SYSTEM</h3>
+            <div style="margin-top:20px;">
+                <button class="pay-btn" style="background:#ffd700; color:000;" onclick="App.pay('stars')"><i class="fa-solid fa-star"></i> STARS (AUTO)</button>
+                <button class="pay-btn" style="background:#222; color:#00f3ff; border:1px solid #00f3ff;" onclick="App.pay('crypto')"><i class="fa-solid fa-bolt"></i> CRYPTO BOT</button>
+                <button class="pay-btn" style="background:#003087; color:#fff;" onclick="App.pay('paypal')"><i class="fa-brands fa-paypal"></i> PAYPAL ME</button>
             </div>
         </div>
     </div>
 
-    <nav class="nav glass-panel">
-        <div class="nav-i active" onclick="App.view('chat', this)"><i class="fa-solid fa-terminal"></i></div>
-        <div class="nav-i" onclick="App.view('profile', this)"><i class="fa-solid fa-credit-card"></i></div>
-        <div class="nav-i" onclick="App.view('ach', this)"><i class="fa-solid fa-trophy"></i></div>
+    <nav class="nav glass">
+        <div class="nav-btn active" onclick="App.switch('ai', this)"><i class="fa-solid fa-microchip"></i></div>
+        <div class="nav-btn" onclick="App.switch('pay', this)"><i class="fa-solid fa-wallet"></i></div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        
-        // ССЫЛКА НА ТВОЙ ВОРКЕР (ЗАМЕНИ!)
-        const API_URL = "https://твой-воркер.workers.dev";
+        const API_URL = "https://твой-воркер.workers.dev"; // ЗАМЕНИТЬ!
+
+        const models = [
+            { id: 'gpt4o', name: 'GPT-4o', icon: 'fa-brain' },
+            { id: 'gpt5', name: 'GPT-5 (Sim)', icon: 'fa-atom' },
+            { id: 'claude35', name: 'Claude 3.5', icon: 'fa-feather' },
+            { id: 'gemini_pro', name: 'Gemini Pro', icon: 'fa-google' },
+            { id: 'llama3', name: 'Llama 3.1', icon: 'fa-dragon' },
+            { id: 'mistral', name: 'Mistral Large', icon: 'fa-wind' },
+            { id: 'o1_preview', name: 'OpenAI o1', icon: 'fa-bolt' },
+            { id: 'midjourney', name: 'Midjourney v6', icon: 'fa-image' },
+            { id: 'dalle3', name: 'DALL-E 3', icon: 'fa-paint-brush' },
+            { id: 'sdxl', name: 'Stable Diff XL', icon: 'fa-palette' },
+            { id: 'flux', name: 'FLUX.1', icon: 'fa-wand-magic-sparkles' },
+            { id: 'sora', name: 'Sora (Video)', icon: 'fa-video' },
+            { id: 'codex', name: 'GitHub Codex', icon: 'fa-code' },
+            { id: 'perplex', name: 'Perplexity', icon: 'fa-search' },
+            { id: 'deepseek', name: 'DeepSeek v2', icon: 'fa-microscope' }
+        ];
 
         const App = {
-            userId: tg.initDataUnsafe?.user?.id || 0,
-            userName: tg.initDataUnsafe?.user?.first_name || "Guest",
-            model: "GPT-5",
-
-            async init() {
-                document.getElementById('user-title').innerText = this.userName.toUpperCase();
-                document.getElementById('node-id').innerText = `NODE: ${this.userId}`;
-                
-                try {
-                    const res = await fetch(`${API_URL}/get-user?id=${this.userId}`);
-                    const data = await res.json();
-                    document.getElementById('balance-display').innerText = `CREDITS: ${data.credits || 0}`;
-                    this.syncAch(JSON.parse(data.achievements || '["boot"]'));
-                } catch (e) { console.log("Offline mode"); }
-            },
-
-            view(id, el) {
-                tg.HapticFeedback.impactOccurred('medium');
-                document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
-                el.classList.add('active');
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-            },
-
-            setModel(m, el) {
-                tg.HapticFeedback.selectionChanged();
-                this.model = m;
-                document.querySelectorAll('#chat .card').forEach(c => c.classList.remove('active'));
-                el.classList.add('active');
-            },
-
-            syncAch(list) {
-                list.forEach(a => document.getElementById(`ach-${a}`)?.classList.add('unlocked'));
-            },
-
-            send() {
-                const text = document.getElementById('prompt').value;
-                if(!text) return;
-                tg.sendData(JSON.stringify({ action: "generate", model: this.model, prompt: text }));
-                tg.close();
-            },
-
-            pay(method) {
-                tg.HapticFeedback.notificationOccurred('success');
-                tg.sendData(JSON.stringify({ action: "create_payment", method: method }));
-                tg.close();
-            }
-        };
-
-        // 3D Графика
-        const Renderer3D = {
+            currentModel: 'gpt4o',
             init() {
-                const container = document.getElementById('canvas-3d');
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-                const renderer = new THREE.WebGLRenderer({ alpha: true });
-                renderer.setSize(container.offsetWidth, container.offsetHeight);
-                container.appendChild(renderer.domElement);
-
-                const geometry = new THREE.SphereGeometry(2, 32, 32);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.2 });
-                const sphere = new THREE.Mesh(geometry, material);
-                scene.add(sphere);
-                camera.position.z = 5;
-
-                function anim() {
-                    requestAnimationFrame(anim);
-                    sphere.rotation.y += 0.002;
-                    renderer.render(scene, camera);
-                }
-                anim();
+                document.getElementById('user-name').innerText = (tg.initDataUnsafe?.user?.first_name || "UNIT").toUpperCase();
+                document.getElementById('user-id').innerText = "ID: " + (tg.initDataUnsafe?.user?.id || "000000");
+                
+                const grid = document.getElementById('ai-selector');
+                models.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = `ai-card glass ${m.id === this.currentModel ? 'active' : ''}`;
+                    div.innerHTML = `<i class="fa-solid ${m.icon}"></i> ${m.name}`;
+                    div.onclick = () => {
+                        document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('active'));
+                        div.classList.add('active');
+                        this.currentModel = m.id;
+                        tg.HapticFeedback.selectionChanged();
+                    };
+                    grid.appendChild(div);
+                });
+                this.sync();
+            },
+            async sync() {
+                try {
+                    const res = await fetch(`${API_URL}/get-user?id=${tg.initDataUnsafe?.user?.id}`);
+                    const data = await res.json();
+                    document.getElementById('balance').innerText = `CREDITS: ${data.credits || 0}`;
+                } catch(e) {}
+            },
+            switch(view, btn) {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-'+view).classList.add('active');
+                tg.HapticFeedback.impactOccurred('medium');
+            },
+            send() {
+                const prompt = document.getElementById('prompt').value;
+                if(!prompt) return;
+                tg.sendData(JSON.stringify({ action: "generate", model: this.currentModel, prompt: prompt }));
+                tg.close();
+            },
+            pay(m) {
+                tg.sendData(JSON.stringify({ action: "pay", method: m }));
+                tg.close();
             }
         };
 
         window.onload = () => {
             App.init();
-            Renderer3D.init();
-            gsap.to('.fill', { width: '100%', duration: 1, onComplete: () => {
-                gsap.to('#loader', { opacity: 0, duration: 0.4, onComplete: () => document.getElementById('loader').style.display='none' });
-            }});
+            gsap.to('#loader', { opacity: 0, duration: 0.5, onComplete: () => document.getElementById('loader').style.display='none' });
         };
     </script>
 </body>
 </html>
+
 
 
 
