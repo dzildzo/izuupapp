@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TITAN OS: SINGULARITY</title>
+    <title>TITAN CORE OS</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -12,251 +12,210 @@
 
     <style>
         :root {
-            --bg-dark: #050505;
-            --neon-cyan: #00f3ff;
-            --neon-pink: #ff00ff;
-            --neon-gold: #ffd700;
-            --glass-bg: rgba(20, 20, 25, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            --cyan: #00f3ff;
+            --pink: #ff00ff;
+            --bg: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-dark); color: #fff; font-family: var(--font-ui); height: 100vh; overflow: hidden; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Эффекты фона */
-        .bg-fx { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% -20%, #001a2c, #000 70%); }
-        .bg-noise { position: fixed; inset: 0; z-index: -1; opacity: 0.03; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJYdWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii44IiBudW1PY3RhdmVzPSI0IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMDAlIjBmaWx0ZXI9InVybCgjYSkiLz48L3N2Zz4='); }
+        /* Фоновые эффекты */
+        .scanline { position: fixed; inset: 0; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 50%); background-size: 100% 4px; z-index: 10; pointer-events: none; opacity: 0.1; }
 
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-        }
+        /* Панель управления */
+        .glass-panel { background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
 
-        /* Шапка с 3D */
-        .header-hero { position: relative; height: 200px; padding: 20px; overflow: hidden; border-radius: 0 0 30px 30px; }
-        #webgl-container { position: absolute; inset: 0; z-index: 0; }
-        .top-bar { position: relative; z-index: 10; display: flex; justify-content: space-between; font-family: monospace; font-size: 10px; }
-        .status-badge { background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 10px; border: 1px solid var(--neon-cyan); }
+        /* Шапка */
+        .header { height: 180px; position: relative; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 0 0 25px 25px; overflow: hidden; }
+        #canvas-3d { position: absolute; inset: 0; z-index: 0; opacity: 0.6; }
+        .top-info { position: relative; z-index: 1; display: flex; justify-content: space-between; font-family: monospace; font-size: 10px; color: var(--cyan); }
 
         /* Контент */
-        .viewport { height: calc(100vh - 280px); overflow-y: auto; padding: 20px; padding-bottom: 100px; }
-        .view-section { display: none; opacity: 0; }
-        .view-section.active { display: block; opacity: 1; }
+        .content { height: calc(100vh - 260px); overflow-y: auto; padding: 20px; }
+        .view { display: none; }
+        .view.active { display: block; }
 
-        /* Сетки нейронок и ачивок */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { padding: 15px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
-        .card.selected { border-color: var(--neon-cyan); background: rgba(0, 243, 255, 0.1); }
-        .card i { font-size: 24px; margin-bottom: 10px; }
-
-        /* Нижнее меню */
-        .bottom-nav { 
-            position: fixed; bottom: 20px; left: 20px; right: 20px; height: 70px; 
-            display: flex; justify-content: space-around; align-items: center; z-index: 100;
+        /* Кнопки и Карточки */
+        .card { padding: 15px; margin-bottom: 12px; transition: 0.3s; cursor: pointer; }
+        .card.active { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        
+        .pay-btn { 
+            width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; 
+            margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; 
         }
-        .nav-item { font-size: 20px; color: rgba(255,255,255,0.3); transition: 0.3s; }
-        .nav-item.active { color: var(--neon-cyan); transform: translateY(-5px); }
 
         /* Ачивки */
-        .ach-badge { text-align: center; opacity: 0.2; filter: grayscale(1); transition: 0.5s; }
-        .ach-badge.unlocked { opacity: 1; filter: grayscale(0); color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
+        .ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .ach-item { text-align: center; opacity: 0.2; filter: grayscale(1); transition: 0.5s; }
+        .ach-item.unlocked { opacity: 1; filter: grayscale(0); color: var(--cyan); }
 
-        /* Загрузчик */
+        /* Навигация */
+        .nav { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 65px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-i { font-size: 20px; color: rgba(255,255,255,0.2); transition: 0.3s; }
+        .nav-i.active { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+
+        /* Загрузка */
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .progress-bar { width: 200px; height: 2px; background: #222; margin-top: 15px; position: relative; }
-        .progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--neon-cyan); width: 0%; box-shadow: 0 0 15px var(--neon-cyan); }
+        .bar { width: 150px; height: 2px; background: #222; margin-top: 10px; }
+        .fill { height: 100%; background: var(--cyan); width: 0%; }
     </style>
 </head>
 <body>
-    <div class="bg-fx"></div>
-    <div class="bg-noise"></div>
-
+    <div class="scanline"></div>
+    
     <div id="loader">
-        <h1 style="letter-spacing: 5px;" class="neon-text">TITAN OS</h1>
-        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <h2 style="letter-spacing: 8px;">TITAN CORE</h2>
+        <div class="bar"><div class="fill"></div></div>
     </div>
 
-    <div id="app-container">
-        <div class="header-hero glass-panel">
-            <div id="webgl-container"></div>
-            <div class="top-bar">
-                <div class="status-badge">NODE: D1_CLOUD</div>
-                <div class="status-badge neon-text" id="credits-val">CREDITS: ...</div>
+    <div class="header glass-panel">
+        <div id="canvas-3d"></div>
+        <div class="top-info">
+            <span id="node-id">NODE: CONNECTING...</span>
+            <span id="balance-display" style="font-weight: bold;">CREDITS: 0</span>
+        </div>
+        <div style="position: relative; z-index: 1;">
+            <p style="font-size: 10px; opacity: 0.5;">BIOMETRIC AUTHENTICATED</p>
+            <h1 id="user-title" style="font-size: 28px;">USER_NAME</h1>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="chat" class="view active">
+            <div class="card glass-panel active" onclick="App.setModel('GPT-5', this)">
+                <i class="fa-solid fa-brain"></i> GPT-5 OMNI <small>(FAST)</small>
             </div>
-            <div style="position:relative; z-index:10; margin-top: 40px;">
-                <span style="font-size: 10px; opacity: 0.5;">SYSTEM STATUS: ACTIVE</span>
-                <h1 style="font-size: 32px; font-weight: 900;">TITAN <span style="color:var(--neon-cyan)">CORE</span></h1>
+            <div class="card glass-panel" onclick="App.setModel('CLAUDE', this)">
+                <i class="fa-solid fa-bolt"></i> CLAUDE 3.5 <small>(PRO)</small>
+            </div>
+            <div class="glass-panel" style="padding: 10px; display: flex; margin-top: 20px;">
+                <input type="text" id="prompt" placeholder="Enter command..." style="flex:1; background:none; border:none; color:#fff; outline:none; padding:10px;">
+                <button onclick="App.send()" style="background:var(--cyan); border:none; width:40px; border-radius:10px;"><i class="fa-solid fa-arrow-up"></i></button>
             </div>
         </div>
 
-        <div class="viewport">
-            <div id="view-chat" class="view-section active">
-                <h3 style="margin-bottom: 15px;">Neural Links</h3>
-                <div class="grid-2">
-                    <div class="card glass-panel selected" onclick="App.selectModel('GPT-5', this)">
-                        <i class="fa-solid fa-brain" style="color:var(--neon-cyan)"></i>
-                        <div style="font-weight:bold; font-size:14px;">GPT-5 Omni</div>
-                    </div>
-                    <div class="card glass-panel" onclick="App.selectModel('Claude', this)">
-                        <i class="fa-solid fa-scroll" style="color:var(--neon-pink)"></i>
-                        <div style="font-weight:bold; font-size:14px;">Claude 3.5</div>
-                    </div>
-                </div>
-                <div class="glass-panel" style="margin-top: 20px; padding: 15px; display: flex;">
-                    <input type="text" id="user-input" placeholder="Query transmission..." style="flex:1; background:transparent; border:none; color:white; outline:none;">
-                    <button onclick="App.sendQuery()" style="background:none; border:none; color:var(--neon-cyan); font-size: 20px;"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-
-            <div id="view-profile" class="view-section">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="width: 80px; height: 80px; border: 2px solid var(--neon-cyan); border-radius: 50%; margin: 0 auto; padding: 5px;">
-                        <img id="avatar" src="https://ui-avatars.com/api/?background=000&color=00f3ff" style="width:100%; border-radius:50%;">
-                    </div>
-                    <h2 id="username" style="margin-top: 10px;">USER_NAME</h2>
-                </div>
-                <div class="glass-panel" style="padding: 15px;">
-                    <div style="display:flex; justify-content:space-between; font-size: 12px; margin-bottom: 5px;">
-                        <span>D1 Sync Progress</span><span>100%</span>
-                    </div>
-                    <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
-                        <div style="width: 100%; height: 100%; background: var(--neon-cyan); border-radius: 2px;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-ach" class="view-section">
-                <h3>Data Trophies</h3>
-                <div class="grid-2" style="margin-top: 15px;">
-                    <div class="ach-badge card glass-panel" id="ach-boot"><i class="fa-solid fa-power-off"></i><p>First Boot</p></div>
-                    <div class="ach-badge card glass-panel" id="ach-pro"><i class="fa-solid fa-gem"></i><p>Pro Unit</p></div>
-                </div>
-            </div>
+        <div id="profile" class="view">
+            <h3 style="margin-bottom:15px;">RECHARGE SYSTEM</h3>
+            <button class="pay-btn" style="background:#ffd700; color:#000;" onclick="App.pay('stars')">
+                <i class="fa-solid fa-star"></i> TELEGRAM STARS
+            </button>
+            <button class="pay-btn" style="background:#00a3ff; color:#fff;" onclick="App.pay('crypto')">
+                <i class="fa-solid fa-wallet"></i> CRYPTO BOT
+            </button>
+            <button class="pay-btn" style="background:#fff; color:#003087;" onclick="App.pay('paypal')">
+                <i class="fa-brands fa-paypal"></i> PAYPAL
+            </button>
         </div>
 
-        <nav class="bottom-nav glass-panel">
-            <div class="nav-item active" onclick="App.switchView('chat', this)"><i class="fa-solid fa-microchip"></i></div>
-            <div class="nav-item" onclick="App.switchView('profile', this)"><i class="fa-solid fa-user-astronaut"></i></div>
-            <div class="nav-item" onclick="App.switchView('ach', this)"><i class="fa-solid fa-trophy"></i></div>
-        </nav>
+        <div id="ach" class="view">
+            <h3>ACHIEVEMENTS</h3>
+            <div class="ach-grid" style="margin-top: 20px;">
+                <div class="ach-item glass-panel card" id="ach-boot"><i class="fa-solid fa-power-off"></i><p>Boot</p></div>
+                <div class="ach-item glass-panel card" id="ach-pro"><i class="fa-solid fa-crown"></i><p>Titan Pro</p></div>
+            </div>
+        </div>
     </div>
+
+    <nav class="nav glass-panel">
+        <div class="nav-i active" onclick="App.view('chat', this)"><i class="fa-solid fa-terminal"></i></div>
+        <div class="nav-i" onclick="App.view('profile', this)"><i class="fa-solid fa-credit-card"></i></div>
+        <div class="nav-i" onclick="App.view('ach', this)"><i class="fa-solid fa-trophy"></i></div>
+    </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-
-        // !!! ЗАМЕНИ ЭТО НА СВОЙ URL ВОРКЕРА !!!
+        
+        // ССЫЛКА НА ТВОЙ ВОРКЕР (ЗАМЕНИ!)
         const API_URL = "https://твой-воркер.workers.dev";
 
         const App = {
-            user: tg.initDataUnsafe?.user || { id: 0, first_name: "Local_Unit" },
-            credits: 0,
+            userId: tg.initDataUnsafe?.user?.id || 0,
+            userName: tg.initDataUnsafe?.user?.first_name || "Guest",
             model: "GPT-5",
 
             async init() {
-                document.getElementById('username').innerText = this.user.first_name.toUpperCase();
+                document.getElementById('user-title').innerText = this.userName.toUpperCase();
+                document.getElementById('node-id').innerText = `NODE: ${this.userId}`;
                 
-                // 1. Запрос к D1 через Воркер
                 try {
-                    const res = await fetch(`${API_URL}/get-user?id=${this.user.id}`);
+                    const res = await fetch(`${API_URL}/get-user?id=${this.userId}`);
                     const data = await res.json();
-                    this.credits = data.credits || 0;
-                    this.unlockAch(JSON.parse(data.achievements || '["boot"]'));
-                } catch (e) {
-                    this.credits = "OFFLINE";
-                }
-                
-                document.getElementById('credits-val').innerText = `CREDITS: ${this.credits}`;
+                    document.getElementById('balance-display').innerText = `CREDITS: ${data.credits || 0}`;
+                    this.syncAch(JSON.parse(data.achievements || '["boot"]'));
+                } catch (e) { console.log("Offline mode"); }
             },
 
-            unlockAch(list) {
-                list.forEach(id => {
-                    const el = document.getElementById(`ach-${id}`);
-                    if(el) el.classList.add('unlocked');
-                });
-            },
-
-            switchView(id, el) {
+            view(id, el) {
                 tg.HapticFeedback.impactOccurred('medium');
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('active'));
                 el.classList.add('active');
-                
-                const old = document.querySelector('.view-section.active');
-                const next = document.getElementById(`view-${id}`);
-                
-                gsap.to(old, { opacity: 0, y: 10, duration: 0.2, onComplete: () => {
-                    old.classList.remove('active');
-                    next.classList.add('active');
-                    gsap.fromTo(next, {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.3});
-                }});
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
             },
 
-            selectModel(m, el) {
+            setModel(m, el) {
                 tg.HapticFeedback.selectionChanged();
                 this.model = m;
-                document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-                el.classList.add('selected');
+                document.querySelectorAll('#chat .card').forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
             },
 
-            sendQuery() {
-                const input = document.getElementById('user-input');
-                if(!input.value) return;
-                
+            syncAch(list) {
+                list.forEach(a => document.getElementById(`ach-${a}`)?.classList.add('unlocked'));
+            },
+
+            send() {
+                const text = document.getElementById('prompt').value;
+                if(!text) return;
+                tg.sendData(JSON.stringify({ action: "generate", model: this.model, prompt: text }));
+                tg.close();
+            },
+
+            pay(method) {
                 tg.HapticFeedback.notificationOccurred('success');
-                tg.sendData(JSON.stringify({
-                    action: "generate",
-                    model: this.model,
-                    text: input.value
-                }));
+                tg.sendData(JSON.stringify({ action: "create_payment", method: method }));
                 tg.close();
             }
         };
 
-        // 3D Ядро (скромная версия, чтобы не тормозило)
-        const Scene3D = {
+        // 3D Графика
+        const Renderer3D = {
             init() {
-                const container = document.getElementById('webgl-container');
+                const container = document.getElementById('canvas-3d');
                 const scene = new THREE.Scene();
                 const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-                
+                const renderer = new THREE.WebGLRenderer({ alpha: true });
                 renderer.setSize(container.offsetWidth, container.offsetHeight);
                 container.appendChild(renderer.domElement);
 
-                const geo = new THREE.IcosahedronGeometry(2, 1);
-                const mat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.3 });
-                const mesh = new THREE.Mesh(geo, mat);
-                scene.add(mesh);
+                const geometry = new THREE.SphereGeometry(2, 32, 32);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.2 });
+                const sphere = new THREE.Mesh(geometry, material);
+                scene.add(sphere);
                 camera.position.z = 5;
 
-                function animate() {
-                    requestAnimationFrame(animate);
-                    mesh.rotation.y += 0.005;
-                    mesh.rotation.x += 0.002;
+                function anim() {
+                    requestAnimationFrame(anim);
+                    sphere.rotation.y += 0.002;
                     renderer.render(scene, camera);
                 }
-                animate();
+                anim();
             }
         };
 
         window.onload = () => {
             App.init();
-            Scene3D.init();
-            gsap.to('.progress-fill', { width: '100%', duration: 1.5, onComplete: () => {
-                gsap.to('#loader', { opacity: 0, duration: 0.5, onComplete: () => {
-                    document.getElementById('loader').style.display = 'none';
-                }});
+            Renderer3D.init();
+            gsap.to('.fill', { width: '100%', duration: 1, onComplete: () => {
+                gsap.to('#loader', { opacity: 0, duration: 0.4, onComplete: () => document.getElementById('loader').style.display='none' });
             }});
         };
     </script>
 </body>
 </html>
-
-
 
 
 
