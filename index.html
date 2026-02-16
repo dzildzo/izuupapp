@@ -302,7 +302,14 @@
         TGH.expand();
         TGH.setHeaderColor('#050505');
         TGH.setBackgroundColor('#050505');
-
+async function syncWithD1() {
+    // В реальности Mini App может получать данные через бота, 
+    // но для начала просто отобразим то, что пришло при старте.
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    console.log("Синхронизация с D1 для юзера:", user.id);
+    
+    // Здесь можно сделать fetch к твоему воркеру, чтобы забрать credits из D1
+}
         const AppState = {
             user: TGH.initDataUnsafe?.user || { first_name: 'Anon_Unit', id: 999 },
             credits: 10,
@@ -542,6 +549,7 @@
     </script>
 </body>
 </html>
+
 
 
 
