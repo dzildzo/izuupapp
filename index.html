@@ -2,145 +2,337 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>TITAN CORE v4.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TITAN CORE: ULTIMATE</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
-        :root { --cyan: #00f3ff; --pink: #ff00ff; --bg: #050505; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: #fff; overflow: hidden; height: 100vh; }
-        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-        
-        /* Header */
-        .header { height: 160px; padding: 20px; position: relative; overflow: hidden; }
-        #canvas-3d { position: absolute; inset: 0; opacity: 0.5; }
-        
-        /* Viewport */
-        .viewport { height: calc(100vh - 240px); overflow-y: auto; padding: 15px; padding-bottom: 100px; }
-        .view { display: none; }
-        .view.active { display: block; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=JetBrains+Mono:wght@300;700&display=swap');
 
-        /* Grid for 15 AI Models */
-        .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .ai-card { padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-size: 12px; display: flex; align-items: center; gap: 10px; opacity: 0.7; }
-        .ai-card.active { border-color: var(--cyan); background: rgba(0, 243, 255, 0.1); opacity: 1; box-shadow: 0 0 15px rgba(0,243,255,0.2); }
-        .ai-card i { font-size: 16px; color: var(--cyan); }
+        :root {
+            --cyan: #00f3ff;
+            --pink: #ff00ff;
+            --gold: #ffd700;
+            --bg: #030305;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
 
-        /* Bottom Nav */
-        .nav { position: fixed; bottom: 20px; left: 15px; right: 15px; height: 70px; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-        .nav-btn { color: rgba(255,255,255,0.3); font-size: 22px; transition: 0.3s; }
-        .nav-btn.active { color: var(--cyan); transform: translateY(-5px); }
-        
-        .pay-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            font-family: 'JetBrains Mono', monospace; 
+            height: 100vh; 
+            overflow: hidden; 
+            letter-spacing: -0.5px;
+        }
+
+        /* АНИМИРОВАННЫЙ ФОН */
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 30px 30px;
+            perspective: 500px;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .scanline {
+            position: fixed; inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 50%);
+            background-size: 100% 4px;
+            z-index: 100; pointer-events: none;
+        }
+
+        /* HEADER */
+        .header {
+            height: 220px;
+            padding: 25px;
+            position: relative;
+            display: flex; flex-direction: column; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.15), transparent);
+        }
+        #canvas-3d { position: absolute; inset: 0; z-index: 0; }
+
+        .user-card {
+            position: relative; z-index: 10;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .avatar-frame {
+            width: 60px; height: 60px;
+            border: 2px solid var(--cyan);
+            border-radius: 15px; padding: 3px;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+        .avatar-frame img { width: 100%; border-radius: 10px; }
+
+        .stats-row {
+            display: flex; gap: 10px; margin-top: 15px; z-index: 10;
+        }
+        .stat-badge {
+            background: var(--glass);
+            padding: 5px 12px; border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 10px; font-weight: bold;
+        }
+
+        /* MAIN CONTENT */
+        .viewport {
+            height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+        .view { display: none; opacity: 0; transform: translateY(10px); }
+        .view.active { display: block; opacity: 1; transform: translateY(0); }
+
+        /* NEURAL GRID - 15 MODELS */
+        .ai-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin-bottom: 100px;
+        }
+        .ai-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 15px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-card.active {
+            border-color: var(--cyan);
+            background: rgba(0, 243, 255, 0.05);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+        .ai-card i { font-size: 20px; color: var(--cyan); margin-bottom: 8px; }
+        .ai-card .name { font-size: 12px; font-weight: 800; }
+        .ai-card .desc { font-size: 9px; opacity: 0.5; margin-top: 4px; }
+
+        /* ACHIVEVEMENTS */
+        .ach-list {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .ach-card {
+            display: flex; align-items: center; gap: 15px;
+            padding: 15px; border-radius: 15px;
+            background: var(--glass); border: 1px solid var(--border);
+            filter: grayscale(1); opacity: 0.3; transition: 0.5s;
+        }
+        .ach-card.unlocked { filter: grayscale(0); opacity: 1; border-color: var(--gold); }
+        .ach-icon { font-size: 24px; color: var(--gold); }
+
+        /* INPUT AREA */
+        .input-container {
+            position: fixed; bottom: 100px; left: 20px; right: 20px;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px; padding: 8px;
+            border: 1px solid var(--border);
+            display: flex; align-items: center;
+            z-index: 1000;
+        }
+        .input-container input {
+            flex: 1; background: none; border: none; color: #fff;
+            padding: 12px; outline: none; font-size: 14px;
+        }
+        .send-btn {
+            width: 45px; height: 45px;
+            background: var(--cyan); border: none; border-radius: 15px;
+            color: #000; cursor: pointer;
+        }
+
+        /* NAV BAR */
+        .nav-bar {
+            position: fixed; bottom: 25px; left: 25px; right: 25px;
+            height: 70px; display: flex; justify-content: space-around;
+            align-items: center; z-index: 1000;
+        }
+        .nav-btn {
+            font-size: 20px; color: rgba(255,255,255,0.3);
+            transition: 0.3s; position: relative;
+        }
+        .nav-btn.active { color: var(--cyan); }
+        .nav-btn.active::after {
+            content: ''; position: absolute; bottom: -10px; left: 50%;
+            transform: translateX(-50%); width: 5px; height: 5px;
+            background: var(--cyan); border-radius: 50%; box-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* LOADER */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 10000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .loader-logo { font-family: 'Orbitron', sans-serif; font-size: 24px; letter-spacing: 10px; margin-bottom: 20px; }
+        .loader-bar { width: 200px; height: 2px; background: #111; position: relative; }
+        .loader-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--cyan); width: 0%; }
     </style>
 </head>
 <body>
-    <div id="loader" style="position:fixed; inset:0; background:#000; z-index:10000; display:flex; align-items:center; justify-content:center;">
-        <h1 style="letter-spacing:10px; color:var(--cyan);">TITAN CORE</h1>
+    <div class="bg-grid"></div>
+    <div class="scanline"></div>
+
+    <div id="loader">
+        <div class="loader-logo">TITAN CORE</div>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
     </div>
 
-    <div class="header glass">
+    <div class="header">
         <div id="canvas-3d"></div>
-        <div style="position:relative; z-index:1;">
-            <div style="display:flex; justify-content:space-between; font-family:monospace; font-size:10px;">
-                <span id="user-id">ID: 000000</span>
-                <span id="balance" style="color:var(--cyan)">CREDITS: 0</span>
+        <div class="user-card">
+            <div class="avatar-frame">
+                <img id="u-avatar" src="https://ui-avatars.com/api/?background=0D0D0D&color=00f3ff">
             </div>
-            <h2 id="user-name" style="margin-top:20px; font-size:24px;">UNIT_NAME</h2>
+            <div>
+                <h2 id="u-name" style="font-family: 'Orbitron'; font-size: 18px;">AUTHORIZED_UNIT</h2>
+                <div style="font-size: 9px; opacity: 0.5;">OS VERSION: 4.0.12_STABLE</div>
+            </div>
+        </div>
+        <div class="stats-row">
+            <div class="stat-badge" id="u-credits">CREDITS: 0</div>
+            <div class="stat-badge" id="u-level" style="color: var(--pink)">LVL: 1 [NOVICE]</div>
         </div>
     </div>
 
     <div class="viewport">
         <div id="view-ai" class="view active">
-            <h4 style="opacity:0.5; font-size:10px; letter-spacing:2px;">SELECT NEURAL LINK (15 MODELS AVAILABLE)</h4>
-            <div class="ai-grid" id="ai-selector">
+            <h3 style="font-size: 12px; margin-bottom: 15px; opacity: 0.6;">NEURAL NODE SELECTION</h3>
+            <div class="ai-grid" id="ai-container">
                 </div>
-            <div class="glass" style="margin-top:20px; padding:10px; display:flex;">
-                <input type="text" id="prompt" placeholder="Write your command..." style="flex:1; background:none; border:none; color:#fff; outline:none; padding:10px;">
-                <button onclick="App.send()" style="background:var(--cyan); border:none; width:45px; border-radius:12px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+
+        <div id="view-ach" class="view">
+            <h3 style="font-size: 12px; margin-bottom: 15px;">TROPHY REPOSITORY</h3>
+            <div class="ach-list" id="ach-container">
+                <div class="ach-card" id="ach-boot">
+                    <div class="ach-icon"><i class="fa-solid fa-power-off"></i></div>
+                    <div>
+                        <div style="font-weight:bold">First Boot</div>
+                        <div style="font-size:10px; opacity:0.6">Initialize the Titan System</div>
+                    </div>
+                </div>
+                <div class="ach-card" id="ach-rich">
+                    <div class="ach-icon"><i class="fa-solid fa-gem"></i></div>
+                    <div>
+                        <div style="font-weight:bold">Collector</div>
+                        <div style="font-size:10px; opacity:0.6">Have more than 1000 credits</div>
+                    </div>
+                </div>
+                <div class="ach-card" id="ach-pro">
+                    <div class="ach-icon"><i class="fa-solid fa-crown"></i></div>
+                    <div>
+                        <div style="font-weight:bold">Titan Pro</div>
+                        <div style="font-size:10px; opacity:0.6">Unlock all neural links</div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="view-pay" class="view">
-            <h3>RECHARGE SYSTEM</h3>
-            <div style="margin-top:20px;">
-                <button class="pay-btn" style="background:#ffd700; color:000;" onclick="App.pay('stars')"><i class="fa-solid fa-star"></i> STARS (AUTO)</button>
-                <button class="pay-btn" style="background:#222; color:#00f3ff; border:1px solid #00f3ff;" onclick="App.pay('crypto')"><i class="fa-solid fa-bolt"></i> CRYPTO BOT</button>
-                <button class="pay-btn" style="background:#003087; color:#fff;" onclick="App.pay('paypal')"><i class="fa-brands fa-paypal"></i> PAYPAL ME</button>
-            </div>
+            <h3 style="font-size: 12px; margin-bottom: 15px;">FINANCIAL TERMINAL</h3>
+            <button class="pay-btn" style="background: var(--gold); color:#000; width:100%; padding:18px; border-radius:15px; border:none; font-weight:900; margin-bottom:12px;" onclick="App.pay('stars')">
+                <i class="fa-solid fa-star"></i> TELEGRAM STARS
+            </button>
+            <button class="pay-btn" style="background: #222; color:var(--cyan); border:1px solid var(--cyan); width:100%; padding:18px; border-radius:15px; font-weight:900; margin-bottom:12px;" onclick="App.pay('crypto')">
+                <i class="fa-solid fa-bolt"></i> CRYPTO BOT
+            </button>
+            <button class="pay-btn" style="background: #003087; color:#fff; width:100%; padding:18px; border-radius:15px; border:none; font-weight:900;" onclick="App.pay('paypal')">
+                <i class="fa-brands fa-paypal"></i> PAYPAL GLOBAL
+            </button>
         </div>
     </div>
 
-    <nav class="nav glass">
+    <div class="input-container" id="chat-input-box">
+        <input type="text" id="main-prompt" placeholder="Execute command...">
+        <button class="send-btn" onclick="App.send()"><i class="fa-solid fa-arrow-up"></i></button>
+    </div>
+
+    <nav class="nav-bar glass">
         <div class="nav-btn active" onclick="App.switch('ai', this)"><i class="fa-solid fa-microchip"></i></div>
+        <div class="nav-btn" onclick="App.switch('ach', this)"><i class="fa-solid fa-trophy"></i></div>
         <div class="nav-btn" onclick="App.switch('pay', this)"><i class="fa-solid fa-wallet"></i></div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        const API_URL = "https://твой-воркер.workers.dev"; // ЗАМЕНИТЬ!
+        const API_URL = "https://твой-воркер.workers.dev";
 
         const models = [
-            { id: 'gpt4o', name: 'GPT-4o', icon: 'fa-brain' },
-            { id: 'gpt5', name: 'GPT-5 (Sim)', icon: 'fa-atom' },
-            { id: 'claude35', name: 'Claude 3.5', icon: 'fa-feather' },
-            { id: 'gemini_pro', name: 'Gemini Pro', icon: 'fa-google' },
-            { id: 'llama3', name: 'Llama 3.1', icon: 'fa-dragon' },
-            { id: 'mistral', name: 'Mistral Large', icon: 'fa-wind' },
-            { id: 'o1_preview', name: 'OpenAI o1', icon: 'fa-bolt' },
-            { id: 'midjourney', name: 'Midjourney v6', icon: 'fa-image' },
-            { id: 'dalle3', name: 'DALL-E 3', icon: 'fa-paint-brush' },
-            { id: 'sdxl', name: 'Stable Diff XL', icon: 'fa-palette' },
-            { id: 'flux', name: 'FLUX.1', icon: 'fa-wand-magic-sparkles' },
-            { id: 'sora', name: 'Sora (Video)', icon: 'fa-video' },
-            { id: 'codex', name: 'GitHub Codex', icon: 'fa-code' },
-            { id: 'perplex', name: 'Perplexity', icon: 'fa-search' },
-            { id: 'deepseek', name: 'DeepSeek v2', icon: 'fa-microscope' }
+            { id: 'gpt4', name: 'GPT-4o', icon: 'fa-brain', d: 'Omni intelligence' },
+            { id: 'o1', name: 'OpenAI o1', icon: 'fa-microchip', d: 'Reasoning model' },
+            { id: 'claude', name: 'Claude 3.5', icon: 'fa-feather', d: 'Natural writing' },
+            { id: 'gemini', name: 'Gemini 1.5', icon: 'fa-google', d: 'Fast & Smart' },
+            { id: 'llama', name: 'Llama 3.1', icon: 'fa-dragon', d: 'Meta Open Source' },
+            { id: 'mistral', name: 'Mistral Large', icon: 'fa-wind', d: 'Efficient AI' },
+            { id: 'midjourney', name: 'Midjourney', icon: 'fa-image', d: 'Art Generation' },
+            { id: 'dalle', name: 'DALL-E 3', icon: 'fa-paint-brush', d: 'Photo realism' },
+            { id: 'flux', name: 'Flux.1', icon: 'fa-wand-magic-sparkles', d: 'Next-gen Art' },
+            { id: 'codex', name: 'Codex', icon: 'fa-code', d: 'Coding expert' },
+            { id: 'deepseek', name: 'DeepSeek', icon: 'fa-microscope', d: 'Science & Logic' },
+            { id: 'perplex', name: 'Perplexity', icon: 'fa-search', d: 'Live Search' },
+            { id: 'grok', name: 'Grok-1', icon: 'fa-x', d: 'Real-time X' },
+            { id: 'sora', name: 'Sora', icon: 'fa-video', d: 'Video FX' },
+            { id: 'stable', name: 'SDXL', icon: 'fa-palette', d: 'Local Diffusion' }
         ];
 
         const App = {
-            currentModel: 'gpt4o',
+            currentModel: 'gpt4',
             init() {
-                document.getElementById('user-name').innerText = (tg.initDataUnsafe?.user?.first_name || "UNIT").toUpperCase();
-                document.getElementById('user-id').innerText = "ID: " + (tg.initDataUnsafe?.user?.id || "000000");
-                
-                const grid = document.getElementById('ai-selector');
+                document.getElementById('u-name').innerText = (tg.initDataUnsafe?.user?.first_name || "UNIT").toUpperCase();
+                if(tg.initDataUnsafe?.user?.photo_url) document.getElementById('u-avatar').src = tg.initDataUnsafe.user.photo_url;
+
+                const container = document.getElementById('ai-container');
                 models.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = `ai-card glass ${m.id === this.currentModel ? 'active' : ''}`;
-                    div.innerHTML = `<i class="fa-solid ${m.icon}"></i> ${m.name}`;
-                    div.onclick = () => {
+                    const el = document.createElement('div');
+                    el.className = `ai-card ${m.id === this.currentModel ? 'active' : ''}`;
+                    el.innerHTML = `<i class="fa-solid ${m.icon}"></i><div class="name">${m.name}</div><div class="desc">${m.d}</div>`;
+                    el.onclick = () => {
                         document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('active'));
-                        div.classList.add('active');
+                        el.classList.add('active');
                         this.currentModel = m.id;
                         tg.HapticFeedback.selectionChanged();
                     };
-                    grid.appendChild(div);
+                    container.appendChild(el);
                 });
                 this.sync();
             },
             async sync() {
                 try {
-                    const res = await fetch(`${API_URL}/get-user?id=${tg.initDataUnsafe?.user?.id}`);
-                    const data = await res.json();
-                    document.getElementById('balance').innerText = `CREDITS: ${data.credits || 0}`;
+                    const r = await fetch(`${API_URL}/get-user?id=${tg.initDataUnsafe?.user?.id || 0}`);
+                    const d = await r.json();
+                    document.getElementById('u-credits').innerText = `CREDITS: ${d.credits || 0}`;
+                    if(d.credits > 1000) document.getElementById('ach-rich').classList.add('unlocked');
+                    this.unlockAch(JSON.parse(d.achievements || '["boot"]'));
                 } catch(e) {}
             },
+            unlockAch(list) {
+                list.forEach(a => document.getElementById(`ach-${a}`)?.classList.add('unlocked'));
+            },
             switch(view, btn) {
+                tg.HapticFeedback.impactOccurred('medium');
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.getElementById('view-'+view).classList.add('active');
-                tg.HapticFeedback.impactOccurred('medium');
+                const nextView = document.getElementById('view-'+view);
+                nextView.classList.add('active');
+                gsap.fromTo(nextView, {opacity: 0, y: 10}, {opacity: 1, y: 0});
+                
+                document.getElementById('chat-input-box').style.display = view === 'ai' ? 'flex' : 'none';
             },
             send() {
-                const prompt = document.getElementById('prompt').value;
-                if(!prompt) return;
-                tg.sendData(JSON.stringify({ action: "generate", model: this.currentModel, prompt: prompt }));
+                const p = document.getElementById('main-prompt').value;
+                if(!p) return;
+                tg.sendData(JSON.stringify({ action: "generate", model: this.currentModel, prompt: p }));
                 tg.close();
             },
             pay(m) {
@@ -149,9 +341,36 @@
             }
         };
 
+        const Scene3D = {
+            init() {
+                const container = document.getElementById('canvas-3d');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, container.offsetWidth/container.offsetHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                container.appendChild(renderer.domElement);
+
+                const geo = new THREE.IcosahedronGeometry(2, 2);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.1 });
+                const mesh = new THREE.Mesh(geo, mat);
+                scene.add(mesh);
+                camera.position.z = 5;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    mesh.rotation.y += 0.003;
+                    renderer.render(scene, camera);
+                }
+                animate();
+            }
+        };
+
         window.onload = () => {
             App.init();
-            gsap.to('#loader', { opacity: 0, duration: 0.5, onComplete: () => document.getElementById('loader').style.display='none' });
+            Scene3D.init();
+            gsap.to('.loader-fill', { width: '100%', duration: 1.5, onComplete: () => {
+                gsap.to('#loader', { opacity: 0, duration: 0.5, onComplete: () => document.getElementById('loader').style.display='none' });
+            }});
         };
     </script>
 </body>
