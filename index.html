@@ -3,182 +3,546 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TITAN OS: SINGULARITY</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
-        :root { --accent: #00f2ff; --glass: rgba(255, 255, 255, 0.05); --bg: #000; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; height: 100vh; }
+        /* --- CORE AESTHETICS --- */
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-gold: #ffd700;
+            --glass-bg: rgba(20, 20, 25, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --blur-strength: 25px;
+            --font-mono: 'Courier New', monospace;
+            --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
 
-        /* 3D CUBE BOOT SCREEN */
-        #boot { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s; }
-        .scene { width: 100px; height: 100px; perspective: 400px; }
-        .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: rotateCube 3s infinite linear; }
-        .face { position: absolute; width: 100px; height: 100px; border: 2px solid var(--accent); background: rgba(0, 242, 255, 0.1); box-shadow: inset 0 0 20px var(--accent); }
-        .front  { transform: translateZ(50px); }
-        .back   { transform: rotateY(180deg) translateZ(50px); }
-        .left   { transform: rotateY(-90deg) translateZ(50px); }
-        .right  { transform: rotateY(90deg) translateZ(50px); }
-        .top    { transform: rotateX(90deg) translateZ(50px); }
-        .bottom { transform: rotateX(-90deg) translateZ(50px); }
-        @keyframes rotateCube { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(360deg); } }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { background: var(--bg-dark); color: #fff; font-family: var(--font-ui); height: 100vh; overflow: hidden; position: relative; }
 
-        /* TABS NAVIGATION */
-        .nav { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,10,0.8); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 15px 0 30px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
-        .nav-item { color: #555; font-size: 20px; transition: 0.3s; cursor: pointer; }
-        .nav-item.active { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        /* Background Noise & Vibe */
+        .bg-fx { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% -20%, #001a2c, #000 60%); pointer-events: none; }
+        .bg-noise { position: fixed; inset: 0; z-index: -1; opacity: 0.04; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJYdWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii44IiBudW1PY3RhdmVzPSI0IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2EpIi8+PC9zdmc+'); pointer-events: none; }
 
-        /* SECTIONS */
-        .section { display: none; height: 100vh; overflow-y: auto; padding: 20px; padding-top: 60px; padding-bottom: 120px; }
-        .section.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- UTILITY CLASSES --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            -webkit-backdrop-filter: blur(var(--blur-strength));
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,255,255,0.05);
+            border-radius: 24px;
+        }
+        .neon-text { color: var(--neon-cyan); text-shadow: 0 0 12px rgba(0, 243, 255, 0.6); }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
 
-        /* UI ELEMENTS */
-        .glass-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; backdrop-filter: blur(10px); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .ai-card { background: var(--glass); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
-        .ai-card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
-        
-        .avatar-box { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent); margin: 0 auto 15px; overflow: hidden; position: relative; }
-        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        /* --- APP STRUCTURE --- */
+        #app-container { display: flex; flex-direction: column; height: 100%; position: relative; z-index: 10; }
 
-        .btn-pay { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; margin-bottom: 10px; font-size: 16px; }
-        .stars { background: #FFE600; color: #000; }
-        .crypto { background: var(--accent); color: #000; }
-        .ton { background: #0088cc; color: #fff; }
+        /* HEADER & 3D CONTAINER */
+        .header-hero { position: relative; height: 220px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+        #webgl-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.8; pointer-events: auto; /* Allow interaction with 3D */ }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; z-index: 10; position: relative; }
+        .status-badge { font-family: var(--font-mono); font-size: 10px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 12px; border: 1px solid var(--neon-cyan); }
+        .hero-title { z-index: 10; pointer-events: none; }
+        .hero-title h1 { font-size: 32px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
+        .hero-title span { font-size: 12px; color: rgba(255,255,255,0.6); letter-spacing: 2px; }
 
-        .ach-item { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; opacity: 0.6; }
-        .ach-item.unlocked { opacity: 1; color: var(--accent); }
+        /* MAIN VIEWPORT */
+        .viewport { flex: 1; position: relative; overflow: hidden; }
+        .view-section { position: absolute; inset: 0; padding: 20px; padding-bottom: 100px; overflow-y: auto; display: none; opacity: 0; /* GSAP will handle visibility */ }
+        .view-section.active { display: block; opacity: 1; }
 
-        #chat-input { position: fixed; bottom: 90px; left: 20px; right: 20px; background: rgba(30,30,30,0.9); border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
-        input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px; outline: none; }
+        /* --- BOTTOM NAVIGATION DOCK --- */
+        .bottom-dock {
+            position: fixed; bottom: 20px; left: 20px; right: 20px; height: 70px;
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 100;
+        }
+        .nav-item {
+            position: relative; font-size: 22px; color: rgba(255,255,255,0.4); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+        }
+        .nav-item.active { color: var(--neon-cyan); background: rgba(0, 243, 255, 0.1); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 243, 255, 0.2); }
+        .nav-item.active::after { content: ''; position: absolute; bottom: -5px; width: 6px; height: 6px; background: var(--neon-cyan); border-radius: 50%; box-shadow: 0 0 10px var(--neon-cyan); }
+
+        /* --- COMPONENTS --- */
+
+        /* Neural Grid (View 1) */
+        .neural-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .neural-card {
+            padding: 15px; height: 110px; display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .neural-card::before { content:''; position: absolute; inset:0; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent); transform: translateX(-100%); transition: 0.5s; }
+        .neural-card:active::before { transform: translateX(100%); }
+        .neural-card.selected { border-color: var(--neon-cyan); background: rgba(0,243,255,0.08); box-shadow: 0 0 20px rgba(0,243,255,0.15); }
+        .n-icon { font-size: 28px; margin-bottom: 10px; }
+        .n-title { font-weight: 700; font-size: 14px; }
+        .n-desc { font-size: 10px; opacity: 0.5; }
+
+        /* Profile (View 2) */
+        .profile-header { text-align: center; margin-bottom: 30px; }
+        .avatar-container { width: 100px; height: 100px; margin: 0 auto 15px; position: relative; }
+        .avatar-ring { position: absolute; inset: -5px; border: 2px dashed var(--neon-cyan); border-radius: 50%; animation: spin 10s linear infinite; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--neon-cyan); overflow: hidden; position: relative; z-index: 2; }
+        .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
+        .stat-bar { background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin: 10px 0; position: relative; overflow: hidden; }
+        .stat-fill { position: absolute; left:0; top:0; height: 100%; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)); width: 65%; }
+
+        /* Achievements (View 3) */
+        .ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .ach-badge { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; filter: grayscale(1); transition: 0.3s; }
+        .ach-badge.unlocked { opacity: 1; filter: grayscale(0); }
+        .ach-icon { font-size: 30px; margin-bottom: 5px; text-shadow: 0 0 10px currentColor; }
+
+        /* Payment (View 4) */
+        .pay-card { padding: 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; }
+        .pay-card.stars { border-color: var(--neon-gold); }
+        .pay-card.crypto { border-color: var(--neon-cyan); }
+        .pay-card.ton { border-color: #0088cc; }
+        .pay-btn { padding: 10px 20px; border-radius: 20px; border: none; font-weight: 800; cursor: pointer; }
+
+        /* Animations */
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Loader */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .loader-bar { width: 200px; height: 2px; background: #222; margin-top: 20px; position: relative; overflow: hidden; }
+        .loader-progress { position: absolute; left:0; top:0; height: 100%; width: 0%; background: var(--neon-cyan); box-shadow: 0 0 15px var(--neon-cyan); }
     </style>
 </head>
 <body>
+    <div class="bg-fx"></div>
+    <div class="bg-noise"></div>
 
-    <div id="boot">
-        <div class="scene">
-            <div class="cube">
-                <div class="face front"></div><div class="face back"></div>
-                <div class="face left"></div><div class="face right"></div>
-                <div class="face top"></div><div class="face bottom"></div>
+    <div id="loader">
+        <div class="neon-text" style="font-size: 24px; font-weight: 900; letter-spacing: 5px;">TITAN OS</div>
+        <div style="font-family: var(--font-mono); font-size: 10px; margin-top: 10px; opacity: 0.7;">INITIALIZING SINGULARITY CORE...</div>
+        <div class="loader-bar"><div class="loader-progress"></div></div>
+    </div>
+
+    <div id="app-container">
+        <div class="header-hero glass-panel" style="border-radius: 0 0 30px 30px; border-top: none; margin: 0;">
+            <div id="webgl-container"></div> <div class="top-bar">
+                <div class="status-badge"><i class="fa-solid fa-signal"></i> NET: STABLE</div>
+                <div class="status-badge neon-text" id="credit-balance">CREDITS: 0</div>
+            </div>
+            <div class="hero-title">
+                <span>SYSTEM READY</span>
+                <h1>Titan <span style="color:var(--neon-cyan)">Core</span></h1>
             </div>
         </div>
-        <h2 style="margin-top:40px; letter-spacing:5px;">TITAN OS</h2>
-    </div>
 
-    <div id="s-profile" class="section active">
-        <div class="glass-card" style="text-align:center;">
-            <div class="avatar-box" onclick="changeAvatar()">
-                <img id="user-pic" src="https://ui-avatars.com/api/?name=Titan&background=00f2ff&color=000">
+        <div class="viewport">
+            
+            <div id="view-chat" class="view-section active">
+                <div style="margin-bottom: 20px;">
+                    <h2 style="font-weight: 800;">Neural Uplink</h2>
+                    <p style="font-size: 12px; opacity: 0.6;">Select an artificial intelligence model.</p>
+                </div>
+                
+                <div class="neural-grid">
+                    <div class="neural-card glass-panel selected" onclick="AppState.selectModel('GPT-5 Omni', this)">
+                        <i class="fa-solid fa-brain n-icon" style="color: var(--neon-cyan);"></i>
+                        <div><div class="n-title">GPT-5 Omni</div><div class="n-desc">Apex Logic Unit</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('Claude 3 Opus', this)">
+                        <i class="fa-solid fa-scroll n-icon" style="color: #d4a88c;"></i>
+                        <div><div class="n-title">Claude Opus</div><div class="n-desc">Deep Context</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('Midjourney V7', this)">
+                        <i class="fa-solid fa-palette n-icon" style="color: var(--neon-pink);"></i>
+                        <div><div class="n-title">Midjourney V7</div><div class="n-desc">Visual Synthesis</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('Gemini Ultra', this)">
+                        <i class="fa-brands fa-google n-icon" style="color: #4285f4;"></i>
+                        <div><div class="n-title">Gemini Ultra</div><div class="n-desc">Multimodal Grid</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('Sora Video', this)">
+                        <i class="fa-solid fa-film n-icon" style="color: #ff3b30;"></i>
+                        <div><div class="n-title">Sora Video</div><div class="n-desc">Temporal Gen</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('Dev-X Coder', this)">
+                        <i class="fa-solid fa-code n-icon" style="color: #30d158;"></i>
+                        <div><div class="n-title">Dev-X Coder</div><div class="n-desc">System Architect</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('AudioCraft', this)">
+                        <i class="fa-solid fa-waveform n-icon" style="color: #ffd60a;"></i>
+                        <div><div class="n-title">AudioCraft</div><div class="n-desc">Sonic Weaver</div></div>
+                    </div>
+                    <div class="neural-card glass-panel" onclick="AppState.selectModel('Data Analyst', this)">
+                        <i class="fa-solid fa-chart-line n-icon" style="color: #64d2ff;"></i>
+                        <div><div class="n-title">Data Analyst</div><div class="n-desc">Pattern Recog</div></div>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="margin-top: 25px; padding: 15px; display: flex; align-items: center;">
+                    <input type="text" placeholder="Transmit query..." style="flex:1; background: transparent; border: none; color: #fff; outline: none; font-family: var(--font-ui);">
+                    <i class="fa-solid fa-arrow-up" style="color: var(--neon-cyan); padding: 10px; background: rgba(0,243,255,0.1); border-radius: 50%;" onclick="UI.simulateSend()"></i>
+                </div>
             </div>
-            <h2 id="user-name">User_01</h2>
-            <div style="color:var(--accent); font-weight:bold;">Status: FREE TRIAL</div>
-        </div>
-        <div class="glass-card">
-            <h3>Tariffs:</h3>
-            <p>• PRO: 8 Models + High Speed (140⭐)</p>
-            <p>• ULTRA: No limits + Video Gen (230⭐)</p>
-        </div>
-    </div>
 
-    <div id="s-pay" class="section">
-        <h2>Payment Terminal</h2>
-        <div class="glass-card">
-            <button class="btn-pay stars" onclick="pay('stars')"><i class="fa-solid fa-star"></i> Telegram Stars</button>
-            <button class="btn-pay crypto" onclick="pay('crypto')"><i class="fa-solid fa-bolt"></i> CryptoBot (USDT)</button>
-            <button class="btn-pay ton" onclick="pay('ton')"><i class="fa-solid fa-gem"></i> TON Connect</button>
-        </div>
-    </div>
+            <div id="view-profile" class="view-section">
+                <div class="profile-header">
+                    <div class="avatar-container">
+                        <div class="avatar-ring"></div>
+                        <div class="avatar-img"><img src="https://ui-avatars.com/api/?name=Titan+Unit&background=000&color=00f3ff&bold=true"></div>
+                    </div>
+                    <h2 id="user-name-display">UNIT_734</h2>
+                    <div class="status-badge" style="display: inline-block; margin-top: 10px;">CLEARANCE: LEVEL 1</div>
+                </div>
 
-    <div id="s-ach" class="section">
-        <h2>Neural Achievements</h2>
-        <div class="glass-card">
-            <div class="ach-item unlocked"><i class="fa-solid fa-check-circle"></i> First Login</div>
-            <div class="ach-item"><i class="fa-solid fa-lock"></i> 100 AI Prompts</div>
-            <div class="ach-item"><i class="fa-solid fa-lock"></i> Ultra Member</div>
-            <div class="ach-item unlocked"><i class="fa-solid fa-award"></i> Beta Tester</div>
-        </div>
-        <div class="glass-card">
-            <h3>Daily Bonus:</h3>
-            <p>Come back tomorrow for +10 tokens!</p>
-        </div>
-    </div>
+                <div class="glass-panel" style="padding: 20px;">
+                    <h3 style="margin-bottom: 15px;">Neural Sync Status</h3>
+                    <div style="font-size: 12px; display: flex; justify-content: space-between;"><span>CPU Load</span><span>65%</span></div>
+                    <div class="stat-bar"><div class="stat-fill" style="width: 65%;"></div></div>
+                    
+                    <div style="font-size: 12px; display: flex; justify-content: space-between; margin-top: 15px;"><span>Memory Bank</span><span>82%</span></div>
+                    <div class="stat-bar"><div class="stat-fill" style="width: 82%; background: linear-gradient(90deg, var(--neon-gold), var(--neon-pink));"></div></div>
+                </div>
+            </div>
 
-    <div id="s-chat" class="section">
-        <h2>AI Hub</h2>
-        <div class="grid" id="ai-grid">
-            <div class="ai-card active" onclick="sel('GPT-4o', this)">GPT-4o</div>
-            <div class="ai-card" onclick="sel('Claude 3.5', this)">Claude 3.5</div>
-            <div class="ai-card" onclick="sel('Gemini Pro', this)">Gemini Pro</div>
-            <div class="ai-card" onclick="sel('Midjourney v6', this)">Midjourney</div>
-            <div class="ai-card" onclick="sel('Sora', this)">Sora (Video)</div>
-            <div class="ai-card" onclick="sel('DALL-E 3', this)">DALL-E 3</div>
-            <div class="ai-card" onclick="sel('SDXL', this)">Stable Diff</div>
-            <div class="ai-card" onclick="sel('Grok-1', this)">Grok-1</div>
-        </div>
-        <div id="chat-input">
-            <input type="text" id="prompt" placeholder="Ask anything...">
-            <i class="fa-solid fa-paper-plane" onclick="send()" style="color:var(--accent)"></i>
-        </div>
-    </div>
+            <div id="view-ach" class="view-section">
+                <h2 style="font-weight: 800; margin-bottom: 20px;">Data Trophies</h2>
+                <div class="ach-grid">
+                    <div class="ach-badge glass-panel unlocked">
+                        <i class="fa-solid fa-power-off ach-icon" style="color: var(--neon-cyan);"></i>
+                        <div style="font-size: 10px; font-weight: bold;">First Boot</div>
+                    </div>
+                    <div class="ach-badge glass-panel unlocked">
+                        <i class="fa-solid fa-link ach-icon" style="color: var(--neon-pink);"></i>
+                        <div style="font-size: 10px; font-weight: bold;">Linked</div>
+                    </div>
+                     <div class="ach-badge glass-panel">
+                        <i class="fa-solid fa-gem ach-icon" style="color: var(--neon-gold);"></i>
+                        <div style="font-size: 10px; font-weight: bold;">Pro User</div>
+                    </div>
+                     <div class="ach-badge glass-panel">
+                        <i class="fa-solid fa-terminal ach-icon"></i>
+                        <div style="font-size: 10px; font-weight: bold;">100 Cmds</div>
+                    </div>
+                     <div class="ach-badge glass-panel">
+                        <i class="fa-solid fa-bug ach-icon"></i>
+                        <div style="font-size: 10px; font-weight: bold;">Debugger</div>
+                    </div>
+                     <div class="ach-badge glass-panel">
+                        <i class="fa-brands fa-bitcoin ach-icon"></i>
+                        <div style="font-size: 10px; font-weight: bold;">Crypto Whale</div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="nav">
-        <i class="fa-solid fa-user nav-item active" onclick="nav('profile', this)"></i>
-        <i class="fa-solid fa-wallet nav-item" onclick="nav('pay', this)"></i>
-        <i class="fa-solid fa-trophy nav-item" onclick="nav('ach', this)"></i>
-        <i class="fa-solid fa-comment-dots nav-item" onclick="nav('chat', this)"></i>
+            <div id="view-pay" class="view-section">
+                 <h2 style="font-weight: 800; margin-bottom: 10px;">Upgrade Core</h2>
+                 <p style="font-size: 12px; opacity: 0.6; margin-bottom: 25px;">Unlock unlimited generation and priority access.</p>
+
+                 <div class="pay-card glass-panel stars">
+                    <div class="flex-center" style="gap: 15px;">
+                        <i class="fa-solid fa-star" style="font-size: 30px; color: var(--neon-gold);"></i>
+                        <div>
+                            <div style="font-weight: 800; font-size: 18px;">Telegram Stars</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Instant activation</div>
+                        </div>
+                    </div>
+                    <button class="pay-btn" style="background: var(--neon-gold); color: #000;" onclick="Payment.pay('STARS')">150 ⭐️</button>
+                 </div>
+
+                 <div class="pay-card glass-panel crypto">
+                    <div class="flex-center" style="gap: 15px;">
+                        <i class="fa-brands fa-ethereum" style="font-size: 30px; color: var(--neon-cyan);"></i>
+                        <div>
+                            <div style="font-weight: 800; font-size: 18px;">CryptoBot</div>
+                            <div style="font-size: 12px; opacity: 0.7;">USDT / TON / BTC</div>
+                        </div>
+                    </div>
+                    <button class="pay-btn" style="background: var(--neon-cyan); color: #000;" onclick="Payment.pay('CRYPTO')">$15</button>
+                 </div>
+
+                 <div class="pay-card glass-panel ton">
+                    <div class="flex-center" style="gap: 15px;">
+                        <i class="fa-solid fa-diamond" style="font-size: 30px; color: #0088cc;"></i>
+                        <div>
+                            <div style="font-weight: 800; font-size: 18px;">TON Connect</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Web3 Wallet</div>
+                        </div>
+                    </div>
+                    <button class="pay-btn" style="background: #0088cc; color: #fff;" onclick="Payment.pay('TON')">5 TON</button>
+                 </div>
+            </div>
+
+        </div> <div class="bottom-dock glass-panel">
+            <div class="nav-item active" onclick="UI.switchView('chat', this)">
+                <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div class="nav-item" onclick="UI.switchView('profile', this)">
+                <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <div class="nav-item" onclick="UI.switchView('ach', this)">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="nav-item" onclick="UI.switchView('pay', this)">
+                <i class="fa-solid fa-rocket"></i>
+            </div>
+        </div>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        let currentModel = 'GPT-4o';
+        // =========================================
+        // SYSTEM CORE (State & Telegram Wrapper)
+        // =========================================
+        const TGH = window.Telegram.WebApp;
+        TGH.expand();
+        TGH.setHeaderColor('#050505');
+        TGH.setBackgroundColor('#050505');
 
-        // BOOT
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('boot').style.opacity = '0';
-                setTimeout(() => document.getElementById('boot').style.display = 'none', 1000);
-            }, 2500);
-            document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || 'TITAN_USER';
+        const AppState = {
+            user: TGH.initDataUnsafe?.user || { first_name: 'Anon_Unit', id: 999 },
+            credits: 10,
+            currentModel: 'GPT-5 Omni',
+            currentView: 'chat',
+
+            init() {
+                document.getElementById('user-name-display').innerText = this.user.first_name.toUpperCase();
+                this.updateCreditsUI();
+            },
+
+            updateCreditsUI() {
+                document.getElementById('credit-balance').innerText = `CREDITS: ${this.credits}`;
+            },
+
+            selectModel(modelName, element) {
+                TGH.HapticFeedback.selectionChanged();
+                this.currentModel = modelName;
+                document.querySelectorAll('.neural-card').forEach(c => c.classList.remove('selected'));
+                element.classList.add('selected');
+                // Visual feedback
+                gsap.fromTo(element, {scale: 0.95}, {scale: 1, duration: 0.3, ease: "back.out(1.7)"});
+            },
+
+            addCredits(amount) {
+                this.credits += amount;
+                this.updateCreditsUI();
+                // Credit animation effect
+                gsap.to('#credit-balance', {color: '#fff', duration: 0.2, yoyo: true, repeat: 1});
+                TGH.HapticFeedback.notificationOccurred('success');
+            }
         };
 
-        function nav(id, el) {
-            tg.HapticFeedback.impactOccurred('light');
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('s-'+id).classList.add('active');
-            el.classList.add('active');
-        }
+        // =========================================
+        // UI CONTROLLER (GSAP Transitions & Audio)
+        // =========================================
+        const UI = {
+            sounds: {
+                click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+                woosh: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3')
+            },
 
-        function sel(m, el) {
-            tg.HapticFeedback.selectionChanged();
-            currentModel = m;
-            document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-        }
+            play(sound) {
+                this.sounds[sound].currentTime = 0;
+                this.sounds[sound].volume = 0.2;
+                this.sounds[sound].play().catch(e=>{}); // Catch autoplay errors
+            },
 
-        function pay(method) {
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.sendData(JSON.stringify({ action: "payment", method: method, plan: "ULTRA" }));
-            setTimeout(() => tg.close(), 150);
-        }
+            switchView(viewId, navElement) {
+                if (AppState.currentView === viewId) return;
+                
+                this.play('click');
+                TGH.HapticFeedback.impactOccurred('medium');
+                AppState.currentView = viewId;
 
-        function send() {
-            const val = document.getElementById('prompt').value;
-            if(!val) return;
-            tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({ action: "generate", model: currentModel, prompt: val }));
-            setTimeout(() => tg.close(), 150);
-        }
+                // Nav items update
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                navElement.classList.add('active');
 
-        function changeAvatar() {
-            tg.HapticFeedback.impactOccurred('medium');
-            alert("Upload photo function coming soon via Telegram bot!");
-        }
+                // GSAP Page Transition
+                const old View = document.querySelector('.view-section.active');
+                const newView = document.getElementById('view-' + viewId);
+
+                gsap.to(oldView, {
+                    opacity: 0,
+                    y: -20,
+                    duration: 0.3,
+                    onComplete: () => {
+                        oldView.classList.remove('active');
+                        newView.classList.add('active');
+                        gsap.fromTo(newView, {opacity: 0, y: 20}, {opacity: 1, y: 0, duration: 0.4, ease: "power2.out"});
+                    }
+                });
+            },
+
+            simulateSend() {
+                 this.play('woosh');
+                 TGH.HapticFeedback.impactOccurred('heavy');
+                 const input = document.querySelector('input[type="text"]');
+                 if(!input.value) return;
+                 input.value = "TRANSMITTING TO CORE...";
+                 setTimeout(() => {
+                    input.value = "";
+                    TGH.sendData(JSON.stringify({action:"generate", model: AppState.currentModel, prompt: "Demo query"}));
+                    TGH.close();
+                 }, 800);
+            }
+        };
+
+        // =========================================
+        // PAYMENT PROCESSOR
+        // =========================================
+        const Payment = {
+            pay(method) {
+                UI.play('click');
+                TGH.HapticFeedback.notificationOccurred('warning');
+                // Animate button press
+                gsap.to(event.target, {scale: 0.9, duration: 0.1, yoyo: true, repeat: 1});
+
+                console.log(`Processing ${method} payment for user ${AppState.user.id}`);
+
+                // Send data to bot and close for invoice rendering
+                setTimeout(() => {
+                    TGH.sendData(JSON.stringify({
+                        action: "payment",
+                        method: method.toLowerCase(),
+                        user_id: AppState.user.id,
+                        plan: "ULTRA"
+                    }));
+                    TGH.close();
+                }, 300);
+            }
+        };
+
+        // =========================================
+        // WEBGL 3D CORE (Three.js)
+        // =========================================
+        const ThreeCore = {
+            scene: null, camera: null, renderer: null, sphere: null, particles: null,
+            container: document.getElementById('webgl-container'),
+            mouseX: 0, mouseY: 0,
+
+            init() {
+                this.scene = new THREE.Scene();
+                // Fog for depth
+                this.scene.fog = new THREE.FogExp2(0x050505, 0.002);
+
+                this.camera = new THREE.PerspectiveCamera(75, this.container.offsetWidth / this.container.offsetHeight, 0.1, 1000);
+                this.camera.position.z = 5;
+
+                this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.container.appendChild(this.renderer.domElement);
+
+                this.createObjects();
+                this.addListeners();
+                this.animate();
+            },
+
+            createObjects() {
+                // 1. The Core Sphere (Wireframe)
+                const geometry = new THREE.IcosahedronGeometry(2, 1); // Low poly look
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x00f3ff,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                this.sphere = new THREE.Mesh(geometry, material);
+                this.scene.add(this.sphere);
+
+                // 2. Inner Glowing Core
+                const innerGeo = new THREE.IcosahedronGeometry(1, 2);
+                const innerMat = new THREE.MeshBasicMaterial({
+                    color: 0xff00ff,
+                    wireframe: true,
+                    transparent: true, opacity: 0.5
+                });
+                this.innerSphere = new THREE.Mesh(innerGeo, innerMat);
+                this.scene.add(this.innerSphere);
+
+                // 3. Particle System around core
+                const particlesGeo = new THREE.BufferGeometry();
+                const count = 200;
+                const posArray = new Float32Array(count * 3);
+                for(let i=0; i<count*3; i++) {
+                    posArray[i] = (Math.random() - 0.5) * 10;
+                }
+                particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+                const particlesMat = new THREE.PointsMaterial({
+                    size: 0.05, color: 0xffd700, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
+                });
+                this.particles = new THREE.Points(particlesGeo, particlesMat);
+                this.scene.add(this.particles);
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404040);
+                this.scene.add(ambientLight);
+                const pointLight = new THREE.PointLight(0x00f3ff, 2, 50);
+                pointLight.position.set(5, 5, 5);
+                this.scene.add(pointLight);
+            },
+
+            addListeners() {
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = this.container.offsetWidth / this.container.offsetHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
+                });
+                // Touch interaction for rotation
+                document.addEventListener('touchmove', (e) => {
+                    this.mouseX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+                    this.mouseY = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+                });
+            },
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                
+                // Idle rotation
+                this.sphere.rotation.x += 0.001;
+                this.sphere.rotation.y += 0.002;
+                this.innerSphere.rotation.x -= 0.003;
+                this.innerSphere.rotation.y -= 0.001;
+                this.particles.rotation.y += 0.0005;
+
+                // Interactive rotation based on touch/mouse
+                this.sphere.rotation.y += this.mouseX * 0.05;
+                this.sphere.rotation.x += this.mouseY * 0.05;
+
+                // Gentle pulsing
+                const scale = 1 + Math.sin(Date.now() * 0.001) * 0.05;
+                this.innerSphere.scale.set(scale, scale, scale);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        };
+
+        // =========================================
+        // BOOT SEQUENCE
+        // =========================================
+        window.onload = () => {
+            AppState.init();
+            ThreeCore.init();
+
+            // Fake loading sequence with GSAP
+            const tl = gsap.timeline();
+            tl.to('.loader-progress', {width: '100%', duration: 1.5, ease: "power2.inOut"})
+              .to('#loader', {opacity: 0, duration: 0.5, onComplete: () => document.getElementById('loader').style.display = 'none'})
+              .from('.header-hero', {y: -50, opacity: 0, duration: 0.8, ease: "back.out"}, "-=0.3")
+              .from('.view-section.active > *', {y: 30, opacity: 0, stagger: 0.1, duration: 0.6, ease: "power2.out"}, "-=0.5")
+              .from('.bottom-dock', {y: 100, opacity: 0, duration: 0.6, ease: "back.out(1.5)"}, "-=0.5");
+            
+            TGH.HapticFeedback.notificationOccurred('success');
+        };
     </script>
 </body>
 </html>
+
 
 
 
