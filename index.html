@@ -1,167 +1,260 @@
-const TGH = window.Telegram.WebApp;
-TGH.expand();
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TITAN OS: SINGULARITY</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-// Конфигурация API (Замени на свою ссылку воркера!)
-const API_URL = "https://твой-воркер.workers.dev"; 
-
-const AppState = {
-    user: TGH.initDataUnsafe?.user || { first_name: 'TITAN_USER', id: 0 },
-    credits: 0,
-    achievements: [], // Сюда придут данные из D1
-    currentModel: 'GPT-5 Omni',
-
-    async init() {
-        document.getElementById('user-name-display').innerText = this.user.first_name.toUpperCase();
-        if(this.user.photo_url) document.getElementById('user-avatar').src = this.user.photo_url;
-        
-        TGH.HapticFeedback.impactOccurred('light');
-
-        // ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ С D1
-        try {
-            const response = await fetch(`${API_URL}/get-user?id=${this.user.id}`);
-            const data = await response.json();
-            
-            if (data && !data.error) {
-                this.credits = data.credits || 0;
-                // Парсим достижения (в базе они хранятся как JSON строка)
-                this.achievements = JSON.parse(data.achievements || '["boot"]');
-            }
-        } catch (e) {
-            console.error("D1 Sync Error:", e);
-            this.credits = "OFFLINE";
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-gold: #ffd700;
+            --glass-bg: rgba(20, 20, 25, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
         }
 
-        this.updateCreditsUI();
-        this.syncAchievementsUI();
-    },
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-dark); color: #fff; font-family: var(--font-ui); height: 100vh; overflow: hidden; }
 
-    updateCreditsUI() {
-        document.getElementById('credit-balance').innerText = `CREDITS: ${this.credits}`;
-    },
+        /* Эффекты фона */
+        .bg-fx { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% -20%, #001a2c, #000 70%); }
+        .bg-noise { position: fixed; inset: 0; z-index: -1; opacity: 0.03; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJYdWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii44IiBudW1PY3RhdmVzPSI0IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMDAlIjBmaWx0ZXI9InVybCgjYSkiLz48L3N2Zz4='); }
 
-    syncAchievementsUI() {
-        // Находим все карточки достижений
-        const badges = document.querySelectorAll('.ach-badge');
-        const achMap = {
-            'boot': 0,      // Первая иконка
-            'linked': 1,    // Вторая
-            'pro': 2        // Третья
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        /* Шапка с 3D */
+        .header-hero { position: relative; height: 200px; padding: 20px; overflow: hidden; border-radius: 0 0 30px 30px; }
+        #webgl-container { position: absolute; inset: 0; z-index: 0; }
+        .top-bar { position: relative; z-index: 10; display: flex; justify-content: space-between; font-family: monospace; font-size: 10px; }
+        .status-badge { background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 10px; border: 1px solid var(--neon-cyan); }
+
+        /* Контент */
+        .viewport { height: calc(100vh - 280px); overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+        .view-section { display: none; opacity: 0; }
+        .view-section.active { display: block; opacity: 1; }
+
+        /* Сетки нейронок и ачивок */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card { padding: 15px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .card.selected { border-color: var(--neon-cyan); background: rgba(0, 243, 255, 0.1); }
+        .card i { font-size: 24px; margin-bottom: 10px; }
+
+        /* Нижнее меню */
+        .bottom-nav { 
+            position: fixed; bottom: 20px; left: 20px; right: 20px; height: 70px; 
+            display: flex; justify-content: space-around; align-items: center; z-index: 100;
+        }
+        .nav-item { font-size: 20px; color: rgba(255,255,255,0.3); transition: 0.3s; }
+        .nav-item.active { color: var(--neon-cyan); transform: translateY(-5px); }
+
+        /* Ачивки */
+        .ach-badge { text-align: center; opacity: 0.2; filter: grayscale(1); transition: 0.5s; }
+        .ach-badge.unlocked { opacity: 1; filter: grayscale(0); color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
+
+        /* Загрузчик */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .progress-bar { width: 200px; height: 2px; background: #222; margin-top: 15px; position: relative; }
+        .progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--neon-cyan); width: 0%; box-shadow: 0 0 15px var(--neon-cyan); }
+    </style>
+</head>
+<body>
+    <div class="bg-fx"></div>
+    <div class="bg-noise"></div>
+
+    <div id="loader">
+        <h1 style="letter-spacing: 5px;" class="neon-text">TITAN OS</h1>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+
+    <div id="app-container">
+        <div class="header-hero glass-panel">
+            <div id="webgl-container"></div>
+            <div class="top-bar">
+                <div class="status-badge">NODE: D1_CLOUD</div>
+                <div class="status-badge neon-text" id="credits-val">CREDITS: ...</div>
+            </div>
+            <div style="position:relative; z-index:10; margin-top: 40px;">
+                <span style="font-size: 10px; opacity: 0.5;">SYSTEM STATUS: ACTIVE</span>
+                <h1 style="font-size: 32px; font-weight: 900;">TITAN <span style="color:var(--neon-cyan)">CORE</span></h1>
+            </div>
+        </div>
+
+        <div class="viewport">
+            <div id="view-chat" class="view-section active">
+                <h3 style="margin-bottom: 15px;">Neural Links</h3>
+                <div class="grid-2">
+                    <div class="card glass-panel selected" onclick="App.selectModel('GPT-5', this)">
+                        <i class="fa-solid fa-brain" style="color:var(--neon-cyan)"></i>
+                        <div style="font-weight:bold; font-size:14px;">GPT-5 Omni</div>
+                    </div>
+                    <div class="card glass-panel" onclick="App.selectModel('Claude', this)">
+                        <i class="fa-solid fa-scroll" style="color:var(--neon-pink)"></i>
+                        <div style="font-weight:bold; font-size:14px;">Claude 3.5</div>
+                    </div>
+                </div>
+                <div class="glass-panel" style="margin-top: 20px; padding: 15px; display: flex;">
+                    <input type="text" id="user-input" placeholder="Query transmission..." style="flex:1; background:transparent; border:none; color:white; outline:none;">
+                    <button onclick="App.sendQuery()" style="background:none; border:none; color:var(--neon-cyan); font-size: 20px;"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+            <div id="view-profile" class="view-section">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border: 2px solid var(--neon-cyan); border-radius: 50%; margin: 0 auto; padding: 5px;">
+                        <img id="avatar" src="https://ui-avatars.com/api/?background=000&color=00f3ff" style="width:100%; border-radius:50%;">
+                    </div>
+                    <h2 id="username" style="margin-top: 10px;">USER_NAME</h2>
+                </div>
+                <div class="glass-panel" style="padding: 15px;">
+                    <div style="display:flex; justify-content:space-between; font-size: 12px; margin-bottom: 5px;">
+                        <span>D1 Sync Progress</span><span>100%</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
+                        <div style="width: 100%; height: 100%; background: var(--neon-cyan); border-radius: 2px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-ach" class="view-section">
+                <h3>Data Trophies</h3>
+                <div class="grid-2" style="margin-top: 15px;">
+                    <div class="ach-badge card glass-panel" id="ach-boot"><i class="fa-solid fa-power-off"></i><p>First Boot</p></div>
+                    <div class="ach-badge card glass-panel" id="ach-pro"><i class="fa-solid fa-gem"></i><p>Pro Unit</p></div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav glass-panel">
+            <div class="nav-item active" onclick="App.switchView('chat', this)"><i class="fa-solid fa-microchip"></i></div>
+            <div class="nav-item" onclick="App.switchView('profile', this)"><i class="fa-solid fa-user-astronaut"></i></div>
+            <div class="nav-item" onclick="App.switchView('ach', this)"><i class="fa-solid fa-trophy"></i></div>
+        </nav>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // !!! ЗАМЕНИ ЭТО НА СВОЙ URL ВОРКЕРА !!!
+        const API_URL = "https://твой-воркер.workers.dev";
+
+        const App = {
+            user: tg.initDataUnsafe?.user || { id: 0, first_name: "Local_Unit" },
+            credits: 0,
+            model: "GPT-5",
+
+            async init() {
+                document.getElementById('username').innerText = this.user.first_name.toUpperCase();
+                
+                // 1. Запрос к D1 через Воркер
+                try {
+                    const res = await fetch(`${API_URL}/get-user?id=${this.user.id}`);
+                    const data = await res.json();
+                    this.credits = data.credits || 0;
+                    this.unlockAch(JSON.parse(data.achievements || '["boot"]'));
+                } catch (e) {
+                    this.credits = "OFFLINE";
+                }
+                
+                document.getElementById('credits-val').innerText = `CREDITS: ${this.credits}`;
+            },
+
+            unlockAch(list) {
+                list.forEach(id => {
+                    const el = document.getElementById(`ach-${id}`);
+                    if(el) el.classList.add('unlocked');
+                });
+            },
+
+            switchView(id, el) {
+                tg.HapticFeedback.impactOccurred('medium');
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                el.classList.add('active');
+                
+                const old = document.querySelector('.view-section.active');
+                const next = document.getElementById(`view-${id}`);
+                
+                gsap.to(old, { opacity: 0, y: 10, duration: 0.2, onComplete: () => {
+                    old.classList.remove('active');
+                    next.classList.add('active');
+                    gsap.fromTo(next, {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.3});
+                }});
+            },
+
+            selectModel(m, el) {
+                tg.HapticFeedback.selectionChanged();
+                this.model = m;
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+            },
+
+            sendQuery() {
+                const input = document.getElementById('user-input');
+                if(!input.value) return;
+                
+                tg.HapticFeedback.notificationOccurred('success');
+                tg.sendData(JSON.stringify({
+                    action: "generate",
+                    model: this.model,
+                    text: input.value
+                }));
+                tg.close();
+            }
         };
 
-        // Сначала сбрасываем всё в серый цвет
-        badges.forEach(b => b.classList.remove('unlocked'));
+        // 3D Ядро (скромная версия, чтобы не тормозило)
+        const Scene3D = {
+            init() {
+                const container = document.getElementById('webgl-container');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                container.appendChild(renderer.domElement);
 
-        // Активируем только те, что есть в массиве из базы
-        this.achievements.forEach(achKey => {
-            const index = achMap[achKey];
-            if (index !== undefined && badges[index]) {
-                badges[index].classList.add('unlocked');
+                const geo = new THREE.IcosahedronGeometry(2, 1);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.3 });
+                const mesh = new THREE.Mesh(geo, mat);
+                scene.add(mesh);
+                camera.position.z = 5;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    mesh.rotation.y += 0.005;
+                    mesh.rotation.x += 0.002;
+                    renderer.render(scene, camera);
+                }
+                animate();
             }
-        });
-    },
+        };
 
-    selectModel(modelName, element) {
-        TGH.HapticFeedback.selectionChanged();
-        this.currentModel = modelName;
-        document.querySelectorAll('.neural-card').forEach(c => c.classList.remove('selected'));
-        element.classList.add('selected');
-        gsap.fromTo(element, {scale: 0.95}, {scale: 1, duration: 0.3, ease: "back.out"});
-    }
-};
-
-const UI = {
-    switchView(viewId, navElement) {
-        if (AppState.currentView === viewId) return;
-        
-        TGH.HapticFeedback.impactOccurred('medium');
-        AppState.currentView = viewId;
-
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        navElement.classList.add('active');
-
-        const oldView = document.querySelector('.view-section.active');
-        const newView = document.getElementById('view-' + viewId);
-
-        gsap.to(oldView, {
-            opacity: 0, y: -20, duration: 0.2,
-            onComplete: () => {
-                oldView.classList.remove('active');
-                newView.classList.add('active');
-                gsap.fromTo(newView, {opacity: 0, y: 20}, {opacity: 1, y: 0, duration: 0.3});
-            }
-        });
-    },
-
-    simulateSend() {
-        const input = document.getElementById('query-input');
-        if(!input.value) return;
-        
-        TGH.HapticFeedback.impactOccurred('heavy');
-        const text = input.value;
-        input.value = "TRANSMITTING TO D1...";
-        
-        setTimeout(() => {
-            TGH.sendData(JSON.stringify({
-                action: "generate",
-                model: AppState.currentModel,
-                prompt: text,
-                user_id: AppState.user.id
-            }));
-            TGH.close();
-        }, 600);
-    }
-};
-
-const Payment = {
-    pay(method) {
-        TGH.HapticFeedback.notificationOccurred('warning');
-        TGH.sendData(JSON.stringify({
-            action: "payment", 
-            method: method, 
-            user_id: AppState.user.id,
-            ach_unlock: "pro" // Пример: покупка сразу дает ачивку Pro
-        }));
-        setTimeout(() => TGH.close(), 200);
-    }
-};
-
-// --- Инициализация 3D и загрузки ---
-const ThreeCore = {
-    scene: null, camera: null, renderer: null, sphere: null,
-    init() {
-        const container = document.getElementById('webgl-container');
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-        this.camera.position.z = 4;
-
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        this.renderer.setSize(container.offsetWidth, container.offsetHeight);
-        container.appendChild(this.renderer.domElement);
-
-        const geometry = new THREE.IcosahedronGeometry(2, 1);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.2 });
-        this.sphere = new THREE.Mesh(geometry, material);
-        this.scene.add(this.sphere);
-
-        this.animate();
-    },
-    animate() {
-        requestAnimationFrame(() => this.animate());
-        this.sphere.rotation.y += 0.005;
-        this.renderer.render(this.scene, this.camera);
-    }
-};
-
-window.onload = () => {
-    AppState.init();
-    ThreeCore.init();
-    
-    gsap.to('.loader-progress', {width: '100%', duration: 1.2, onComplete: () => {
-        gsap.to('#loader', {opacity: 0, duration: 0.5, onComplete: () => {
-            document.getElementById('loader').style.display = 'none';
-        }});
-    }});
-};
+        window.onload = () => {
+            App.init();
+            Scene3D.init();
+            gsap.to('.progress-fill', { width: '100%', duration: 1.5, onComplete: () => {
+                gsap.to('#loader', { opacity: 0, duration: 0.5, onComplete: () => {
+                    document.getElementById('loader').style.display = 'none';
+                }});
+            }});
+        };
+    </script>
+</body>
+</html>
 
 
 
