@@ -6,136 +6,161 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root {
-            --ios-bg: #000;
-            --glass: rgba(255, 255, 255, 0.08);
-            --neon: #00f2ff;
-            --ultra: #ff00ff;
-        }
+        :root { --accent: #00f2ff; --glass: rgba(255, 255, 255, 0.05); --bg: #000; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; height: 100vh; }
 
-        body { margin: 0; background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui; height: 100vh; overflow: hidden; }
+        /* 3D CUBE BOOT SCREEN */
+        #boot { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s; }
+        .scene { width: 100px; height: 100px; perspective: 400px; }
+        .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: rotateCube 3s infinite linear; }
+        .face { position: absolute; width: 100px; height: 100px; border: 2px solid var(--accent); background: rgba(0, 242, 255, 0.1); box-shadow: inset 0 0 20px var(--accent); }
+        .front  { transform: translateZ(50px); }
+        .back   { transform: rotateY(180deg) translateZ(50px); }
+        .left   { transform: rotateY(-90deg) translateZ(50px); }
+        .right  { transform: rotateY(90deg) translateZ(50px); }
+        .top    { transform: rotateX(90deg) translateZ(50px); }
+        .bottom { transform: rotateX(-90deg) translateZ(50px); }
+        @keyframes rotateCube { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(360deg); } }
 
-        /* LIQUID BACKGROUND */
-        .liquid-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 30%, #00243d 0%, transparent 40%), radial-gradient(circle at 80% 70%, #2d003d 0%, transparent 40%); filter: blur(60px); }
+        /* TABS NAVIGATION */
+        .nav { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,10,0.8); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 15px 0 30px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
+        .nav-item { color: #555; font-size: 20px; transition: 0.3s; cursor: pointer; }
+        .nav-item.active { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
 
-        /* BOOT SCREEN */
-        #boot { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.8s; }
-        .logo-glow { width: 80px; height: 80px; background: #fff; border-radius: 20px; box-shadow: 0 0 40px #fff; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } }
+        /* SECTIONS */
+        .section { display: none; height: 100vh; overflow-y: auto; padding: 20px; padding-top: 60px; padding-bottom: 120px; }
+        .section.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* iOS GLASS PANELS */
-        .glass-panel { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; margin: 15px; padding: 20px; }
+        /* UI ELEMENTS */
+        .glass-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; backdrop-filter: blur(10px); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .ai-card { background: var(--glass); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .ai-card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
         
-        .header { padding: 40px 20px 10px; display: flex; justify-content: space-between; align-items: center; }
-        .title { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+        .avatar-box { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent); margin: 0 auto 15px; overflow: hidden; position: relative; }
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 15px; }
-        .card { background: var(--glass); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s; position: relative; overflow: hidden; }
-        .card:active { transform: scale(0.95); background: rgba(255,255,255,0.15); }
-        .card.active { border-color: var(--neon); box-shadow: 0 0 15px rgba(0,242,255,0.3); }
-        
-        .c-icon { font-size: 24px; color: var(--neon); margin-bottom: 10px; }
-        .c-name { font-weight: 700; font-size: 15px; }
+        .btn-pay { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; margin-bottom: 10px; font-size: 16px; }
+        .stars { background: #FFE600; color: #000; }
+        .crypto { background: var(--accent); color: #000; }
+        .ton { background: #0088cc; color: #fff; }
 
-        /* INPUT AREA */
-        .dock { position: fixed; bottom: 30px; left: 15px; right: 15px; display: flex; gap: 10px; }
-        .ios-input { flex: 1; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; padding: 15px 20px; color: #fff; font-size: 16px; outline: none; backdrop-filter: blur(10px); }
-        .send-btn { width: 50px; height: 50px; border-radius: 50%; background: #fff; color: #000; border: none; font-size: 20px; cursor: pointer; }
+        .ach-item { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; opacity: 0.6; }
+        .ach-item.unlocked { opacity: 1; color: var(--accent); }
 
-        /* SHOP SHEET */
-        .sheet-btn { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: 700; margin-bottom: 10px; font-size: 16px; transition: 0.2s; }
-        .sheet-btn:active { transform: scale(0.98); }
-        .btn-pro { background: #fff; color: #000; }
-        .btn-ultra { background: linear-gradient(90deg, #ff00ff, #00f2ff); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; z-index: 500; }
-        .sheet { width: 100%; background: #1c1c1e; border-radius: 30px 30px 0 0; padding: 30px; animation: slide 0.3s ease-out; }
-        @keyframes slide { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        #chat-input { position: fixed; bottom: 90px; left: 20px; right: 20px; background: rgba(30,30,30,0.9); border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
+        input { flex: 1; background: transparent; border: none; color: #fff; padding: 10px; outline: none; }
     </style>
 </head>
 <body>
-    <div class="liquid-bg"></div>
 
     <div id="boot">
-        <div class="logo-glow"></div>
-        <p style="margin-top:25px; font-weight:600; letter-spacing:2px; opacity:0.5;">TITAN OS</p>
+        <div class="scene">
+            <div class="cube">
+                <div class="face front"></div><div class="face back"></div>
+                <div class="face left"></div><div class="face right"></div>
+                <div class="face top"></div><div class="face bottom"></div>
+            </div>
+        </div>
+        <h2 style="margin-top:40px; letter-spacing:5px;">TITAN OS</h2>
     </div>
 
-    <div class="header">
-        <div class="title">Titan <span style="color:var(--neon)">AI</span></div>
-        <div onclick="openShop()" style="background:var(--glass); padding:8px 15px; border-radius:20px; font-size:12px; border:1px solid rgba(255,255,255,0.1)">UPGRADE</div>
-    </div>
-
-    <div class="grid" id="main-grid">
-        <div class="card active" onclick="selectModel('GPT-5', this)">
-            <i class="fa-solid fa-bolt c-icon"></i>
-            <div class="c-name">GPT-5 Pro</div>
+    <div id="s-profile" class="section active">
+        <div class="glass-card" style="text-align:center;">
+            <div class="avatar-box" onclick="changeAvatar()">
+                <img id="user-pic" src="https://ui-avatars.com/api/?name=Titan&background=00f2ff&color=000">
+            </div>
+            <h2 id="user-name">User_01</h2>
+            <div style="color:var(--accent); font-weight:bold;">Status: FREE TRIAL</div>
         </div>
-        <div class="card" onclick="selectModel('CLAUDE', this)">
-            <i class="fa-solid fa-wand-magic-sparkles c-icon" style="color:#ffcc00"></i>
-            <div class="c-name">Claude 3.5</div>
-        </div>
-        <div class="card" onclick="selectModel('CODE', this)">
-            <i class="fa-solid fa-code c-icon" style="color:#20c20e"></i>
-            <div class="c-name">Dev Core</div>
-        </div>
-        <div class="card" onclick="selectModel('MIDJOURNEY', this)">
-            <i class="fa-solid fa-image c-icon" style="color:var(--ultra)"></i>
-            <div class="c-name">Midjourney</div>
+        <div class="glass-card">
+            <h3>Tariffs:</h3>
+            <p>• PRO: 8 Models + High Speed (140⭐)</p>
+            <p>• ULTRA: No limits + Video Gen (230⭐)</p>
         </div>
     </div>
 
-    <div class="modal" id="shop">
-        <div class="sheet">
-            <h2 style="margin-top:0">Choose Plan</h2>
-            <div style="margin-bottom:20px; color:#888;">Unlock all 8 models and database access.</div>
-            
-            <button class="sheet-btn btn-pro" onclick="pay('PRO', 'stars')">⭐ TITAN PRO - 140 XTR</button>
-            <button class="sheet-btn btn-ultra" onclick="pay('ULTRA', 'stars')">⭐ TITAN ULTRA - 230 XTR</button>
-            <button class="sheet-btn" style="background:#222; color:#fff;" onclick="pay('ULTRA', 'crypto')">💎 CryptoBot (USDT)</button>
-            <button class="sheet-btn" style="background:transparent; color:#555;" onclick="closeShop()">Cancel</button>
+    <div id="s-pay" class="section">
+        <h2>Payment Terminal</h2>
+        <div class="glass-card">
+            <button class="btn-pay stars" onclick="pay('stars')"><i class="fa-solid fa-star"></i> Telegram Stars</button>
+            <button class="btn-pay crypto" onclick="pay('crypto')"><i class="fa-solid fa-bolt"></i> CryptoBot (USDT)</button>
+            <button class="btn-pay ton" onclick="pay('ton')"><i class="fa-solid fa-gem"></i> TON Connect</button>
         </div>
     </div>
 
-    <div class="dock">
-        <input type="text" class="ios-input" id="prompt" placeholder="Message Titan...">
-        <button class="send-btn" onclick="send()"><i class="fa-solid fa-arrow-up"></i></button>
+    <div id="s-ach" class="section">
+        <h2>Neural Achievements</h2>
+        <div class="glass-card">
+            <div class="ach-item unlocked"><i class="fa-solid fa-check-circle"></i> First Login</div>
+            <div class="ach-item"><i class="fa-solid fa-lock"></i> 100 AI Prompts</div>
+            <div class="ach-item"><i class="fa-solid fa-lock"></i> Ultra Member</div>
+            <div class="ach-item unlocked"><i class="fa-solid fa-award"></i> Beta Tester</div>
+        </div>
+        <div class="glass-card">
+            <h3>Daily Bonus:</h3>
+            <p>Come back tomorrow for +10 tokens!</p>
+        </div>
+    </div>
+
+    <div id="s-chat" class="section">
+        <h2>AI Hub</h2>
+        <div class="grid" id="ai-grid">
+            <div class="ai-card active" onclick="sel('GPT-4o', this)">GPT-4o</div>
+            <div class="ai-card" onclick="sel('Claude 3.5', this)">Claude 3.5</div>
+            <div class="ai-card" onclick="sel('Gemini Pro', this)">Gemini Pro</div>
+            <div class="ai-card" onclick="sel('Midjourney v6', this)">Midjourney</div>
+            <div class="ai-card" onclick="sel('Sora', this)">Sora (Video)</div>
+            <div class="ai-card" onclick="sel('DALL-E 3', this)">DALL-E 3</div>
+            <div class="ai-card" onclick="sel('SDXL', this)">Stable Diff</div>
+            <div class="ai-card" onclick="sel('Grok-1', this)">Grok-1</div>
+        </div>
+        <div id="chat-input">
+            <input type="text" id="prompt" placeholder="Ask anything...">
+            <i class="fa-solid fa-paper-plane" onclick="send()" style="color:var(--accent)"></i>
+        </div>
+    </div>
+
+    <div class="nav">
+        <i class="fa-solid fa-user nav-item active" onclick="nav('profile', this)"></i>
+        <i class="fa-solid fa-wallet nav-item" onclick="nav('pay', this)"></i>
+        <i class="fa-solid fa-trophy nav-item" onclick="nav('ach', this)"></i>
+        <i class="fa-solid fa-comment-dots nav-item" onclick="nav('chat', this)"></i>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        let currentModel = 'GPT-4o';
 
-        let model = 'GPT-5';
-
-        // BOOT SEQUENCE
+        // BOOT
         window.onload = () => {
             setTimeout(() => {
                 document.getElementById('boot').style.opacity = '0';
-                setTimeout(() => document.getElementById('boot').style.display = 'none', 800);
-                tg.HapticFeedback.notificationOccurred('success');
-            }, 1800);
+                setTimeout(() => document.getElementById('boot').style.display = 'none', 1000);
+            }, 2500);
+            document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || 'TITAN_USER';
         };
 
-        function selectModel(m, el) {
+        function nav(id, el) {
             tg.HapticFeedback.impactOccurred('light');
-            model = m;
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('s-'+id).classList.add('active');
             el.classList.add('active');
         }
 
-        function openShop() {
-            tg.HapticFeedback.impactOccurred('medium');
-            document.getElementById('shop').style.display = 'flex';
+        function sel(m, el) {
+            tg.HapticFeedback.selectionChanged();
+            currentModel = m;
+            document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        function closeShop() {
-            document.getElementById('shop').style.display = 'none';
-        }
-
-        function pay(plan, method) {
-            tg.HapticFeedback.notificationOccurred('warning');
-            tg.sendData(JSON.stringify({ action: "payment", plan: plan, method: method }));
+        function pay(method) {
+            tg.HapticFeedback.notificationOccurred('success');
+            tg.sendData(JSON.stringify({ action: "payment", method: method, plan: "ULTRA" }));
             setTimeout(() => tg.close(), 150);
         }
 
@@ -143,12 +168,18 @@
             const val = document.getElementById('prompt').value;
             if(!val) return;
             tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({ action: "generate", model: model, prompt: val }));
+            tg.sendData(JSON.stringify({ action: "generate", model: currentModel, prompt: val }));
             setTimeout(() => tg.close(), 150);
+        }
+
+        function changeAvatar() {
+            tg.HapticFeedback.impactOccurred('medium');
+            alert("Upload photo function coming soon via Telegram bot!");
         }
     </script>
 </body>
 </html>
+
 
 
 
