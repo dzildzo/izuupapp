@@ -925,9 +925,29 @@
         tg.expand();
         
         // Auto-detect backend URL (works locally and in production)
+        // For Vercel: uses relative /api paths, for local dev uses localhost:3000
         const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:8787' 
-            : window.location.origin;
+            ? 'http://localhost:3000/api' 
+            : '/api';
+
+        // Universal API call helper
+        async function apiCall(endpoint, data = null, method = 'GET') {
+          const url = `${API_URL}${endpoint}`;
+          const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' }
+          };
+          
+          if (data && method !== 'GET') {
+            options.body = JSON.stringify(data);
+            return fetch(url, options);
+          } else if (data && method === 'GET') {
+            const params = new URLSearchParams(data);
+            return fetch(`${url}?${params}`, options);
+          }
+          
+          return fetch(url, options);
+        }
 
         const models = [
             { id: 'gpt4', name: 'GPT-4o', icon: 'fa-brain', d: 'Omni intelligence' },
@@ -988,7 +1008,7 @@
             },
             async sync() {
                 try {
-                    const r = await fetch(`${API_URL}/get-user?id=${tg.initDataUnsafe?.user?.id || 0}`);
+                    const r = await apiCall('/get-user', { id: tg.initDataUnsafe?.user?.id || 0 });
                     const d = await r.json();
                     document.getElementById('u-credits').innerText = `CREDITS: ${d.credits || 0}`;
                     if(d.credits > 1000) document.getElementById('ach-rich').classList.add('unlocked');
@@ -1009,11 +1029,7 @@
                     btn.disabled = true;
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     
-                    const r = await fetch(`${API_URL}/daily-reward`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: tg.initDataUnsafe?.user?.id || 0 })
-                    });
+                    const r = await apiCall('/daily-reward', { userId: tg.initDataUnsafe?.user?.id || 0 }, 'POST');
                     const d = await r.json();
                     
                     if(d.success) {
@@ -1056,15 +1072,11 @@
                 input.placeholder = 'Processing...';
                 input.disabled = true;
                 
-                fetch(`${API_URL}/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        model: this.currentModel, 
-                        prompt: p,
-                        userId: tg.initDataUnsafe?.user?.id || 0 
-                    })
-                })
+                apiCall('/generate', { 
+                    model: this.currentModel, 
+                    prompt: p,
+                    userId: tg.initDataUnsafe?.user?.id || 0 
+                }, 'POST')
                 .then(r => r.json())
                 .then(d => {
                     if(d.error) {
@@ -1090,16 +1102,12 @@
                 tg.showConfirm(`Purchase ${amount * 100} credits for $${amount}?`, (confirmed) => {
                     if(confirmed) {
                         // In production, integrate with actual payment providers
-                        fetch(`${API_URL}/payment-webhook`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                userId: tg.initDataUnsafe?.user?.id || 0,
-                                amount: amount,
-                                method: m,
-                                transactionId: crypto.randomUUID()
-                            })
-                        })
+                        apiCall('/payment-webhook', { 
+                            userId: tg.initDataUnsafe?.user?.id || 0,
+                            amount: amount,
+                            method: m,
+                            transactionId: crypto.randomUUID ? crypto.randomUUID() : `txn-${Date.now()}`
+                        }, 'POST')
                         .then(r => r.json())
                         .then(d => {
                             if(d.success) {
