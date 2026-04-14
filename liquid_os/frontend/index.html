@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Liquid OS - Феноменальный Дизайн</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+        
+        /* Живой фон с Three.js */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        /* Liquid Glass эффект */
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .liquid-glass:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 48px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Градиентные границы */
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 24px;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.3),
+                rgba(255, 255, 255, 0.1),
+                rgba(255, 255, 255, 0.05),
+                rgba(255, 255, 255, 0.2)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        /* Анимации переходов как в iPhone */
+        .page-transition {
+            animation: pageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes pageEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .app-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            cursor: pointer;
+        }
+        
+        .app-icon:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+        }
+        
+        .app-icon:active {
+            transform: scale(0.95);
+        }
+        
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Уведомления */
+        .notification {
+            animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Pulse эффект для живых элементов */
+        .pulse-live {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Загрузчик */
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Интерактивные элементы */
+        .interactive-element {
+            transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .interactive-element:active {
+            transform: scale(0.95);
+        }
+        
+        /* Статус бар */
+        .status-bar {
+            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Живой фон -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Основной контейнер -->
+    <div id="app" class="relative z-10 min-h-screen">
+        <!-- Статус бар -->
+        <div class="status-bar fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-6 z-50">
+            <div class="text-sm font-medium" id="clock">12:00</div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs" id="connection-status">● Online</span>
+                <div class="w-2 h-2 bg-green-400 rounded-full pulse-live"></div>
+            </div>
+        </div>
+        
+        <!-- Главный экран -->
+        <div id="home-screen" class="pt-20 px-6 pb-6 page-transition">
+            <!-- Приветствие -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
+                    Liquid OS
+                </h1>
+                <p class="text-white/60 text-lg">Добро пожаловать в будущее</p>
+            </div>
+            
+            <!-- Виджеты -->
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <!-- Погода -->
+                <div class="liquid-glass p-4 gradient-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-3xl">🌤️</span>
+                        <span class="text-xs text-white/60">Weather</span>
+                    </div>
+                    <div class="text-3xl font-bold" id="weather-temp">22°</div>
+                    <div class="text-sm text-white/60" id="weather-condition">Sunny</div>
+                </div>
+                
+                <!-- Задачи -->
+                <div class="liquid-glass p-4 gradient-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-3xl">✅</span>
+                        <span class="text-xs text-white/60">Tasks</span>
+                    </div>
+                    <div class="text-3xl font-bold" id="tasks-count">0/0</div>
+                    <div class="text-sm text-white/60">Completed</div>
+                </div>
+            </div>
+            
+            <!-- Приложения -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-white/90">Приложения</h2>
+                <div class="grid grid-cols-4 gap-4" id="apps-grid">
+                    <!-- Иконки приложений будут добавлены через JS -->
+                </div>
+            </div>
+            
+            <!-- Недавние уведомления -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-white/90">Уведомления</h2>
+                <div id="notifications-container" class="space-y-3">
+                    <!-- Уведомления будут добавлены через JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Экран приложения (модальное окно) -->
+        <div id="app-modal" class="fixed inset-0 z-50 hidden">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeApp()"></div>
+            <div class="liquid-glass absolute bottom-0 left-0 right-0 h-[85vh] rounded-t-3xl p-6 overflow-hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" id="modal-app-icon">📱</div>
+                        <div>
+                            <h2 class="text-2xl font-bold" id="modal-app-title">App</h2>
+                            <p class="text-sm text-white/60" id="modal-app-subtitle">Interactive</p>
+                        </div>
+                    </div>
+                    <button onclick="closeApp()" class="w-10 h-10 rounded-full liquid-glass flex items-center justify-center interactive-element">
+                        ✕
+                    </button>
+                </div>
+                
+                <div id="modal-app-content" class="h-[calc(100%-100px)] overflow-y-auto">
+                    <!-- Контент приложения будет добавлен через JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Плавающие уведомления -->
+        <div id="floating-notifications" class="fixed top-16 right-6 z-40 space-y-3 max-w-sm">
+            <!-- Всплывающие уведомления -->
+        </div>
+    </div>
+    
+    <script>
+        // ==================== КОНФИГУРАЦИЯ ====================
+        const API_URL = 'http://localhost:8000';
+        let ws = null;
+        let apps = [];
+        let notifications = [];
+        
+        // ==================== THREE.JS ФОН ====================
+        function initBackground() {
+            const canvas = document.getElementById('bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Создаем плавающие орбы
+            const orbs = [];
+            const colors = [0x6366f1, 0x8b5cf6, 0xec4899, 0x3b82f6];
+            
+            for (let i = 0; i < 5; i++) {
+                const geometry = new THREE.SphereGeometry(Math.random() * 2 + 1, 64, 64);
+                const material = new THREE.MeshBasicMaterial({
+                    color: colors[i % colors.length],
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
+                });
+                const orb = new THREE.Mesh(geometry, material);
+                
+                orb.position.set(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 10
+                );
+                
+                orb.velocity = {
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                };
+                
+                scene.add(orb);
+                orbs.push(orb);
+            }
+            
+            camera.position.z = 15;
+            
+            // Анимация
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                orbs.forEach(orb => {
+                    orb.position.x += orb.velocity.x;
+                    orb.position.y += orb.velocity.y;
+                    orb.position.z += orb.velocity.z;
+                    
+                    // Отталкивание от границ
+                    if (Math.abs(orb.position.x) > 10) orb.velocity.x *= -1;
+                    if (Math.abs(orb.position.y) > 10) orb.velocity.y *= -1;
+                    if (Math.abs(orb.position.z) > 10) orb.velocity.z *= -1;
+                    
+                    orb.rotation.x += 0.001;
+                    orb.rotation.y += 0.001;
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Ресайз
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        // ==================== WEBSOCKET СОЕДИНЕНИЕ ====================
+        function connectWebSocket() {
+            const clientId = 'client_' + Math.random().toString(36).substr(2, 9);
+            ws = new WebSocket(`ws://localhost:8000/ws/${clientId}`);
+            
+            ws.onopen = () => {
+                console.log('Connected to Liquid OS');
+                document.getElementById('connection-status').textContent = '● Online';
+                document.getElementById('connection-status').className = 'text-xs text-green-400';
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connection-status').textContent = '● Offline';
+                document.getElementById('connection-status').className = 'text-xs text-red-400';
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'app_updated':
+                case 'app_state_change':
+                    updateAppData(data.app_id, data.data);
+                    break;
+                case 'new_notification':
+                    showFloatingNotification(data.notification);
+                    break;
+                case 'interaction':
+                    console.log('Interaction from', data.client_id);
+                    break;
+            }
+        }
+        
+        // ==================== ЗАГРУЗКА ДАННЫХ ====================
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}/api/apps`);
+                apps = await response.json();
+                renderApps();
+                updateWidgets();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                // Демо данные если сервер недоступен
+                loadDemoData();
+            }
+        }
+        
+        function loadDemoData() {
+            apps = [
+                { id: 'chat', name: 'Messages', icon: '💬', data: { chats: [{ name: 'Alice', last_message: 'Hey!' }] } },
+                { id: 'music', name: 'Music', icon: '🎵', data: { playlist: [{ title: 'Song 1', artist: 'Artist' }] } },
+                { id: 'photos', name: 'Photos', icon: '📸', data: {} },
+                { id: 'weather', name: 'Weather', icon: '🌤️', data: { current: { temp: 22, condition: 'Sunny' } } },
+                { id: 'notes', name: 'Notes', icon: '📝', data: { notes: [] } },
+                { id: 'calendar', name: 'Calendar', icon: '📅', data: {} },
+                { id: 'tasks', name: 'Tasks', icon: '✅', data: { tasks: [{ id: '1', title: 'Task 1', done: false }] } },
+                { id: 'files', name: 'Files', icon: '📁', data: {} },
+            ];
+            renderApps();
+            updateWidgets();
+        }
+        
+        // ==================== РЕНДЕРИНГ ====================
+        function renderApps() {
+            const grid = document.getElementById('apps-grid');
+            grid.innerHTML = '';
+            
+            apps.forEach((app, index) => {
+                const icon = document.createElement('div');
+                icon.className = 'app-icon flex flex-col items-center gap-2';
+                icon.innerHTML = `
+                    <div>${app.icon}</div>
+                    <span class="text-xs text-white/80">${app.name}</span>
+                `;
+                icon.onclick = () => openApp(app);
+                
+                gsap.from(icon, {
+                    opacity: 0,
+                    y: 20,
+                    duration: 0.4,
+                    delay: index * 0.05,
+                    ease: "power2.out"
+                });
+                
+                grid.appendChild(icon);
+            });
+        }
+        
+        function updateWidgets() {
+            // Погода
+            const weatherApp = apps.find(a => a.id === 'weather');
+            if (weatherApp && weatherApp.data.current) {
+                document.getElementById('weather-temp').textContent = `${weatherApp.data.current.temp}°`;
+                document.getElementById('weather-condition').textContent = weatherApp.data.current.condition;
+            }
+            
+            // Задачи
+            const tasksApp = apps.find(a => a.id === 'tasks');
+            if (tasksApp && tasksApp.data.tasks) {
+                const total = tasksApp.data.tasks.length;
+                const completed = tasksApp.data.tasks.filter(t => t.done).length;
+                document.getElementById('tasks-count').textContent = `${completed}/${total}`;
+            }
+        }
+        
+        function updateAppData(appId, data) {
+            const app = apps.find(a => a.id === appId);
+            if (app) {
+                app.data = { ...app.data, ...data };
+                updateWidgets();
+                
+                if (document.getElementById('modal-app-content').dataset.currentApp === appId) {
+                    renderAppContent(app);
+                }
+            }
+        }
+        
+        // ==================== ОТКРЫТИЕ ПРИЛОЖЕНИЙ ====================
+        function openApp(app) {
+            const modal = document.getElementById('app-modal');
+            const icon = document.getElementById('modal-app-icon');
+            const title = document.getElementById('modal-app-title');
+            const subtitle = document.getElementById('modal-app-subtitle');
+            const content = document.getElementById('modal-app-content');
+            
+            icon.textContent = app.icon;
+            title.textContent = app.name;
+            subtitle.textContent = 'Interactive App';
+            content.dataset.currentApp = app.id;
+            
+            renderAppContent(app);
+            
+            modal.classList.remove('hidden');
+            
+            gsap.from(modal.querySelector('.liquid-glass'), {
+                y: '100%',
+                duration: 0.5,
+                ease: "cubic-bezier(0.16, 1, 0.3, 1)"
+            });
+        }
+        
+        function closeApp() {
+            const modal = document.getElementById('app-modal');
+            
+            gsap.to(modal.querySelector('.liquid-glass'), {
+                y: '100%',
+                duration: 0.4,
+                ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+                onComplete: () => {
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+        
+        function renderAppContent(app) {
+            const content = document.getElementById('modal-app-content');
+            
+            switch(app.id) {
+                case 'chat':
+                    content.innerHTML = renderChatApp(app.data);
+                    break;
+                case 'music':
+                    content.innerHTML = renderMusicApp(app.data);
+                    break;
+                case 'tasks':
+                    content.innerHTML = renderTasksApp(app.data);
+                    break;
+                case 'notes':
+                    content.innerHTML = renderNotesApp(app.data);
+                    break;
+                case 'weather':
+                    content.innerHTML = renderWeatherApp(app.data);
+                    break;
+                default:
+                    content.innerHTML = `
+                        <div class="text-center text-white/60 py-12">
+                            <div class="text-6xl mb-4">${app.icon}</div>
+                            <p>Приложение в разработке</p>
+                        </div>
+                    `;
+            }
+        }
+        
+        function renderChatApp(data) {
+            const chats = data.chats || [];
+            return `
+                <div class="space-y-3">
+                    ${chats.map(chat => `
+                        <div class="liquid-glass p-4 interactive-element">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold">${chat.name}</div>
+                                    <div class="text-sm text-white/60">${chat.last_message}</div>
+                                </div>
+                                ${chat.unread ? `<span class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs">${chat.unread}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderMusicApp(data) {
+            const playlist = data.playlist || [];
+            return `
+                <div class="space-y-3">
+                    <div class="liquid-glass p-6 mb-4 text-center">
+                        <div class="w-32 h-32 mx-auto mb-4 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-6xl">🎵</div>
+                        <div class="text-xl font-bold">Now Playing</div>
+                        <div class="text-white/60">Select a song</div>
+                    </div>
+                    ${playlist.map(song => `
+                        <div class="liquid-glass p-4 interactive-element flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">🎶</div>
+                            <div class="flex-1">
+                                <div class="font-semibold">${song.title}</div>
+                                <div class="text-sm text-white/60">${song.artist}</div>
+                            </div>
+                            <button class="w-10 h-10 rounded-full liquid-glass flex items-center justify-center interactive-element">▶</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderTasksApp(data) {
+            const tasks = data.tasks || [];
+            return `
+                <div class="space-y-3">
+                    ${tasks.map(task => `
+                        <div class="liquid-glass p-4 interactive-element flex items-center gap-4" onclick="toggleTask('${task.id}')">
+                            <div class="w-6 h-6 rounded-full border-2 ${task.done ? 'bg-green-500 border-green-500' : 'border-white/30'} flex items-center justify-center">
+                                ${task.done ? '✓' : ''}
+                            </div>
+                            <div class="flex-1 ${task.done ? 'line-through text-white/40' : ''}">
+                                <div class="font-semibold">${task.title}</div>
+                                <div class="text-xs text-white/60 capitalize">${task.priority}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    <button class="w-full liquid-glass p-4 interactive-element text-white/60 hover:text-white" onclick="addTask()">
+                        + Добавить задачу
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderNotesApp(data) {
+            const notes = data.notes || [];
+            return `
+                <div class="space-y-3">
+                    ${notes.map(note => `
+                        <div class="liquid-glass p-4 interactive-element">
+                            <div class="font-semibold mb-2">${note.title}</div>
+                            <div class="text-sm text-white/60">${note.content}</div>
+                        </div>
+                    `).join('')}
+                    <button class="w-full liquid-glass p-4 interactive-element text-white/60 hover:text-white" onclick="addNote()">
+                        + Добавить заметку
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderWeatherApp(data) {
+            const current = data.current || {};
+            const forecast = data.forecast || [];
+            return `
+                <div class="space-y-6">
+                    <div class="liquid-glass p-8 text-center">
+                        <div class="text-6xl mb-4">🌤️</div>
+                        <div class="text-5xl font-bold mb-2">${current.temp}°</div>
+                        <div class="text-xl text-white/80">${current.condition}</div>
+                        <div class="text-sm text-white/60 mt-2">Humidity: ${current.humidity || '--'}%</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        ${forecast.map(day => `
+                            <div class="liquid-glass p-4 text-center">
+                                <div class="text-sm text-white/60 mb-2">${day.day}</div>
+                                <div class="text-2xl mb-2">☀️</div>
+                                <div class="font-bold">${day.temp}°</div>
+                                <div class="text-xs text-white/60">${day.condition}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ==================== ИНТЕРАКТИВНОСТЬ ====================
+        function toggleTask(taskId) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'app_action',
+                    app_id: 'tasks',
+                    action: 'toggle_task',
+                    task_id: taskId
+                }));
+            } else {
+                // Локальное обновление
+                const app = apps.find(a => a.id === 'tasks');
+                if (app) {
+                    const task = app.data.tasks.find(t => t.id === taskId);
+                    if (task) {
+                        task.done = !task.done;
+                        renderAppContent(app);
+                        updateWidgets();
+                    }
+                }
+            }
+        }
+        
+        function addTask() {
+            const title = prompt('Название задачи:');
+            if (title && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'app_action',
+                    app_id: 'tasks',
+                    action: 'add_task',
+                    title: title
+                }));
+            }
+        }
+        
+        function addNote() {
+            const title = prompt('Название заметки:');
+            const content = prompt('Содержание:');
+            if (title && content) {
+                // Добавление заметки
+            }
+        }
+        
+        // ==================== УВЕДОМЛЕНИЯ ====================
+        function showFloatingNotification(notification) {
+            const container = document.getElementById('floating-notifications');
+            const notif = document.createElement('div');
+            notif.className = 'liquid-glass p-4 notification gradient-border';
+            notif.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl">${getNotificationIcon(notification.type)}</div>
+                    <div class="flex-1">
+                        <div class="font-semibold text-sm">${notification.title}</div>
+                        <div class="text-xs text-white/60 mt-1">${notification.message}</div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(notif);
+            
+            // Автоматическое удаление через 5 секунд
+            setTimeout(() => {
+                gsap.to(notif, {
+                    opacity: 0,
+                    x: 20,
+                    duration: 0.3,
+                    onComplete: () => notif.remove()
+                });
+            }, 5000);
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                message: '💬',
+                reminder: '⏰',
+                update: '🔄',
+                achievement: '🏆'
+            };
+            return icons[type] || '🔔';
+        }
+        
+        // ==================== ЧАСЫ ====================
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+        }
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initBackground();
+            connectWebSocket();
+            loadData();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Haptic feedback для мобильных
+            if ('vibrate' in navigator) {
+                document.querySelectorAll('.interactive-element').forEach(el => {
+                    el.addEventListener('click', () => {
+                        navigator.vibrate(10);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
