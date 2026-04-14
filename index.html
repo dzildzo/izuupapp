@@ -2,1044 +2,782 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TITAN CORE: ULTIMATE</title>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Liquid OS - Феноменальный Дизайн</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
-
-        :root {
-            --cyan: #00f3ff;
-            --cyan-dark: #00c4cf;
-            --pink: #ff00ff;
-            --pink-dark: #cf00cf;
-            --gold: #ffd700;
-            --gold-dark: #cfaf00;
-            --purple: #bf00ff;
-            --bg-dark: #000000;
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --glass-bg: rgba(255, 255, 255, 0.02);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.15);
-            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --shadow-glow: 0 0 40px rgba(0, 243, 255, 0.1);
-            --blur-strong: blur(40px);
-            --blur-medium: blur(20px);
-            --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
-            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent;
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
         
-        body { 
-            background: var(--bg-dark); 
-            color: #fff; 
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'JetBrains Mono', monospace; 
-            height: 100vh; 
-            overflow: hidden; 
-            letter-spacing: -0.3px;
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
         }
-
-        /* ЖИВОЙ ГРАДИЕНТНЫЙ ФОН */
-        .ambient-bg {
+        
+        /* Живой фон с Three.js */
+        #bg-canvas {
             position: fixed;
-            inset: 0;
-            z-index: -2;
-            background: linear-gradient(135deg, #0a0a0f 0%, #0d0d1a 50%, #050510 100%);
-            overflow: hidden;
-        }
-
-        .ambient-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: float 20s ease-in-out infinite;
-        }
-
-        .orb-1 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(0, 243, 255, 0.3) 0%, transparent 70%);
-            top: -100px;
-            left: -100px;
-            animation-delay: 0s;
-        }
-
-        .orb-2 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(255, 0, 255, 0.2) 0%, transparent 70%);
-            bottom: -150px;
-            right: -150px;
-            animation-delay: -7s;
-        }
-
-        .orb-3 {
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(191, 0, 255, 0.25) 0%, transparent 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(30px, -30px) scale(1.05); }
-            50% { transform: translate(-20px, 20px) scale(0.95); }
-            75% { transform: translate(20px, 30px) scale(1.02); }
-        }
-
-        /* LIQUID GLASS КАРТОЧКИ */
-        .liquid-glass {
-            background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.03) 0%,
-                rgba(255, 255, 255, 0.01) 100%
-            );
-            backdrop-filter: var(--blur-strong);
-            -webkit-backdrop-filter: var(--blur-strong);
-            border: 1px solid var(--glass-border);
-            border-top: 1px solid var(--glass-highlight);
-            border-left: 1px solid var(--glass-highlight);
-            box-shadow: 
-                var(--shadow-soft),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-            transition: all 0.4s var(--ease-out);
-        }
-
-        .liquid-glass:hover {
-            background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.05) 0%,
-                rgba(255, 255, 255, 0.02) 100%
-            );
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 
-                0 12px 48px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15),
-                0 0 60px rgba(0, 243, 255, 0.05);
-        }
-
-        /* HEADER С LIQUID EFFECT */
-        .header {
-            height: 240px;
-            padding: 24px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-            background: linear-gradient(180deg, rgba(0, 243, 255, 0.08) 0%, transparent 100%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.5), transparent);
-        }
-
-        #canvas-3d {
-            position: absolute;
-            inset: 0;
+            width: 100%;
+            height: 100%;
             z-index: 0;
         }
-
-        .user-card {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        
+        /* Liquid Glass эффект */
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
-
-        .avatar-frame {
-            width: 64px;
-            height: 64px;
-            border-radius: 20px;
-            padding: 2px;
-            background: linear-gradient(135deg, rgba(0, 243, 255, 0.3), rgba(255, 0, 255, 0.2));
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-            position: relative;
-            overflow: hidden;
+        
+        .liquid-glass:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 48px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
         }
-
-        .avatar-frame::before {
+        
+        /* Градиентные границы */
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 24px;
+        }
+        
+        .gradient-border::before {
             content: '';
             position: absolute;
-            inset: 0;
-            border-radius: 18px;
-            background: rgba(10, 10, 15, 0.9);
-            z-index: 1;
-        }
-
-        .avatar-frame img {
-            position: absolute;
-            inset: 2px;
-            width: calc(100% - 4px);
-            height: calc(100% - 4px);
-            border-radius: 16px;
-            object-fit: cover;
-            z-index: 2;
-        }
-
-        .user-info h2 {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .user-info .version {
-            font-size: 10px;
-            opacity: 0.4;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-        }
-
-        .stats-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            z-index: 10;
-        }
-
-        .stat-badge {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 8px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            transition: all 0.3s var(--ease-out);
-        }
-
-        .stat-badge:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .stat-badge#u-level {
-            background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(191, 0, 255, 0.05));
-            border-color: rgba(255, 0, 255, 0.2);
-        }
-
-        /* MAIN CONTENT С ПЛАВНЫМИ ПЕРЕХОДАМИ */
-        .viewport {
-            height: calc(100vh - 320px);
-            overflow-y: auto;
-            padding: 20px;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .viewport::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .viewport::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .viewport::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-        }
-
-        .view {
-            display: none;
-            opacity: 0;
-            transform: translateY(15px) scale(0.98);
-        }
-
-        .view.active {
-            display: block;
-            animation: viewEnter 0.5s var(--ease-out) forwards;
-        }
-
-        @keyframes viewEnter {
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* NEURAL GRID - 15 MODELS С LIQUID GLASS */
-        .ai-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-            margin-bottom: 100px;
-        }
-
-        .ai-card {
+            inset: -1px;
+            border-radius: 24px;
+            padding: 1px;
             background: linear-gradient(
                 135deg,
-                rgba(255, 255, 255, 0.02) 0%,
-                rgba(255, 255, 255, 0.01) 100%
+                rgba(255, 255, 255, 0.3),
+                rgba(255, 255, 255, 0.1),
+                rgba(255, 255, 255, 0.05),
+                rgba(255, 255, 255, 0.2)
             );
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 22px;
-            padding: 18px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.5s var(--ease-out);
-            cursor: pointer;
-        }
-
-        .ai-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 243, 255, 0.08) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
             pointer-events: none;
         }
-
-        .ai-card:hover::before {
-            opacity: 1;
+        
+        /* Анимации переходов как в iPhone */
+        .page-transition {
+            animation: pageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-        .ai-card:active {
-            transform: scale(0.96);
+        
+        @keyframes pageEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
-
-        .ai-card.active {
-            background: linear-gradient(
-                135deg,
-                rgba(0, 243, 255, 0.08) 0%,
-                rgba(0, 243, 255, 0.02) 100%
-            );
-            border-color: rgba(0, 243, 255, 0.3);
-            border-top-color: rgba(0, 243, 255, 0.5);
-            box-shadow: 
-                0 0 40px rgba(0, 243, 255, 0.1),
-                inset 0 0 0 1px rgba(0, 243, 255, 0.05);
-            transform: translateY(-2px);
-        }
-
-        .ai-card i {
-            font-size: 22px;
-            background: linear-gradient(135deg, var(--cyan), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-            display: inline-block;
-        }
-
-        .ai-card .name {
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.2px;
-            color: #fff;
-        }
-
-        .ai-card .desc {
-            font-size: 10px;
-            opacity: 0.4;
-            margin-top: 6px;
-            font-weight: 300;
-            letter-spacing: 0.3px;
-        }
-
-        /* ACHIEVEMENTS С BLUR EFFECT */
-        .ach-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .ach-card {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 18px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            filter: grayscale(1);
-            opacity: 0.4;
-            transition: all 0.6s var(--ease-out);
-        }
-
-        .ach-card.unlocked {
-            filter: grayscale(0);
-            opacity: 1;
-            background: linear-gradient(
-                135deg,
-                rgba(255, 215, 0, 0.08) 0%,
-                rgba(255, 215, 0, 0.02) 100%
-            );
-            border-color: rgba(255, 215, 0, 0.3);
-            border-top-color: rgba(255, 215, 0, 0.5);
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
-        }
-
-        .ach-icon {
-            font-size: 28px;
-            background: linear-gradient(135deg, var(--gold), var(--pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .ach-card .name {
-            font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 0.2px;
-        }
-
-        .ach-card .desc {
-            font-size: 11px;
-            opacity: 0.5;
-            font-weight: 300;
-        }
-
-        /* INPUT AREA С GLASSMORPHISM */
-        .input-container {
-            position: fixed;
-            bottom: 100px;
-            left: 16px;
-            right: 16px;
-            background: rgba(15, 15, 25, 0.6);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border-radius: 24px;
-            padding: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            z-index: 1000;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.3s var(--ease-out);
-        }
-
-        .input-container:focus-within {
-            background: rgba(15, 15, 25, 0.8);
-            border-color: rgba(0, 243, 255, 0.3);
-            box-shadow: 
-                0 12px 48px rgba(0, 0, 0, 0.5),
-                0 0 40px rgba(0, 243, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        }
-
-        .input-container input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #fff;
-            padding: 14px 16px;
-            outline: none;
-            font-size: 15px;
-            font-family: inherit;
-            font-weight: 400;
-        }
-
-        .input-container input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        .send-btn {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--cyan), var(--cyan-dark));
-            border: none;
-            border-radius: 18px;
-            color: #000;
-            cursor: pointer;
+        
+        .app-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s var(--ease-out);
-            box-shadow: 0 4px 20px rgba(0, 243, 255, 0.3);
-        }
-
-        .send-btn:active {
-            transform: scale(0.92);
-            box-shadow: 0 2px 12px rgba(0, 243, 255, 0.2);
-        }
-
-        .send-btn i {
-            font-size: 18px;
-        }
-
-        /* NAV BAR С FLOATING EFFECT */
-        .nav-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            height: 76px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 1000;
-            background: rgba(15, 15, 25, 0.5);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border-radius: 26px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            padding: 0 8px;
-        }
-
-        .nav-btn {
-            font-size: 22px;
-            color: rgba(255, 255, 255, 0.25);
-            transition: all 0.4s var(--ease-out);
-            position: relative;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 18px;
-            cursor: pointer;
-        }
-
-        .nav-btn:active {
-            transform: scale(0.9);
-        }
-
-        .nav-btn.active {
-            color: #fff;
-            background: linear-gradient(135deg, rgba(0, 243, 255, 0.15), rgba(0, 243, 255, 0.05));
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-        }
-
-        .nav-btn.active i {
-            transform: translateY(-2px);
-        }
-
-        /* LOADER С MODERN ANIMATION */
-        #loader {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-dark);
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .loader-logo {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 8px;
-            margin-bottom: 40px;
-            background: linear-gradient(135deg, var(--cyan), var(--purple), var(--pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: shimmer 2s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.3); }
-        }
-
-        .loader-bar {
-            width: 240px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 2px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .loader-fill {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
-            border-radius: 2px;
-            width: 0%;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
-        }
-
-        /* PAYMENT BUTTONS */
-        .pay-btn {
-            width: 100%;
-            padding: 20px;
-            border-radius: 20px;
-            border: none;
-            font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 0.5px;
-            margin-bottom: 14px;
-            cursor: pointer;
-            transition: all 0.4s var(--ease-out);
+            font-size: 32px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            cursor: pointer;
         }
-
-        .pay-btn:active {
-            transform: scale(0.97);
+        
+        .app-icon:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
         }
-
-        .pay-btn:first-child {
-            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-            color: #000;
-            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+        
+        .app-icon:active {
+            transform: scale(0.95);
         }
-
-        .pay-btn:nth-child(2) {
-            background: rgba(34, 34, 34, 0.8);
-            color: var(--cyan);
-            border: 1px solid var(--cyan);
-            box-shadow: 0 8px 24px rgba(0, 243, 255, 0.1);
+        
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .pay-btn:last-child {
-            background: linear-gradient(135deg, #003087, #0045bd);
-            color: #fff;
-            box-shadow: 0 8px 24px rgba(0, 48, 135, 0.3);
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
         }
-
-        /* SECTION TITLES */
-        .section-title {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            opacity: 0.5;
-            margin-bottom: 18px;
-            text-transform: uppercase;
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
         }
-
-        /* RESPONSIVE */
-        @media (max-width: 380px) {
-            .ai-grid {
-                grid-template-columns: 1fr;
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Уведомления */
+        .notification {
+            animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
             }
-            
-            .header {
-                height: 220px;
+            to {
+                opacity: 1;
+                transform: translateX(0);
             }
+        }
+        
+        /* Pulse эффект для живых элементов */
+        .pulse-live {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Загрузчик */
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Интерактивные элементы */
+        .interactive-element {
+            transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .interactive-element:active {
+            transform: scale(0.95);
+        }
+        
+        /* Статус бар */
+        .status-bar {
+            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
 <body>
-    <!-- AMBIENT BACKGROUND -->
-    <div class="ambient-bg">
-        <div class="ambient-orb orb-1"></div>
-        <div class="ambient-orb orb-2"></div>
-        <div class="ambient-orb orb-3"></div>
-    </div>
-
-    <div id="loader">
-        <div class="loader-logo">TITAN CORE</div>
-        <div class="loader-bar"><div class="loader-fill"></div></div>
-    </div>
-
-    <div class="header">
-        <div id="canvas-3d"></div>
-        <div class="user-card">
-            <div class="avatar-frame">
-                <img id="u-avatar" src="https://ui-avatars.com/api/?background=0D0D0D&color=00f3ff" alt="Avatar">
-            </div>
-            <div class="user-info">
-                <h2 id="u-name">AUTHORIZED UNIT</h2>
-                <div class="version">OS VERSION: 5.0.0 • STABLE</div>
+    <!-- Живой фон -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Основной контейнер -->
+    <div id="app" class="relative z-10 min-h-screen">
+        <!-- Статус бар -->
+        <div class="status-bar fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-6 z-50">
+            <div class="text-sm font-medium" id="clock">12:00</div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs" id="connection-status">● Online</span>
+                <div class="w-2 h-2 bg-green-400 rounded-full pulse-live"></div>
             </div>
         </div>
-        <div class="stats-row">
-            <div class="stat-badge" id="u-credits">CREDITS: 0</div>
-            <div class="stat-badge" id="u-level">LVL: 1 • NOVICE</div>
-        </div>
-    </div>
-
-    <div class="viewport">
-        <div id="view-ai" class="view active">
-            <h3 class="section-title">Neural Node Selection</h3>
-            <div class="ai-grid" id="ai-container"></div>
-        </div>
-
-        <div id="view-ach" class="view">
-            <h3 class="section-title">Trophy Repository</h3>
-            <div class="ach-list" id="ach-container">
-                <div class="ach-card" id="ach-boot">
-                    <div class="ach-icon"><i class="fa-solid fa-power-off"></i></div>
-                    <div>
-                        <div class="name">First Boot</div>
-                        <div class="desc">Initialize the Titan System</div>
+        
+        <!-- Главный экран -->
+        <div id="home-screen" class="pt-20 px-6 pb-6 page-transition">
+            <!-- Приветствие -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
+                    Liquid OS
+                </h1>
+                <p class="text-white/60 text-lg">Добро пожаловать в будущее</p>
+            </div>
+            
+            <!-- Виджеты -->
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <!-- Погода -->
+                <div class="liquid-glass p-4 gradient-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-3xl">🌤️</span>
+                        <span class="text-xs text-white/60">Weather</span>
                     </div>
+                    <div class="text-3xl font-bold" id="weather-temp">22°</div>
+                    <div class="text-sm text-white/60" id="weather-condition">Sunny</div>
                 </div>
-                <div class="ach-card" id="ach-rich">
-                    <div class="ach-icon"><i class="fa-solid fa-gem"></i></div>
-                    <div>
-                        <div class="name">Collector</div>
-                        <div class="desc">Accumulate 1000+ credits</div>
+                
+                <!-- Задачи -->
+                <div class="liquid-glass p-4 gradient-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-3xl">✅</span>
+                        <span class="text-xs text-white/60">Tasks</span>
                     </div>
+                    <div class="text-3xl font-bold" id="tasks-count">0/0</div>
+                    <div class="text-sm text-white/60">Completed</div>
                 </div>
-                <div class="ach-card" id="ach-pro">
-                    <div class="ach-icon"><i class="fa-solid fa-crown"></i></div>
-                    <div>
-                        <div class="name">Titan Pro</div>
-                        <div class="desc">Unlock all neural links</div>
-                    </div>
+            </div>
+            
+            <!-- Приложения -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-white/90">Приложения</h2>
+                <div class="grid grid-cols-4 gap-4" id="apps-grid">
+                    <!-- Иконки приложений будут добавлены через JS -->
+                </div>
+            </div>
+            
+            <!-- Недавние уведомления -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-white/90">Уведомления</h2>
+                <div id="notifications-container" class="space-y-3">
+                    <!-- Уведомления будут добавлены через JS -->
                 </div>
             </div>
         </div>
-
-        <div id="view-pay" class="view">
-            <h3 class="section-title">Financial Terminal</h3>
-            <button class="pay-btn" onclick="App.pay('stars')">
-                <i class="fa-solid fa-star"></i>&nbsp;&nbsp;TELEGRAM STARS
-            </button>
-            <button class="pay-btn" onclick="App.pay('crypto')">
-                <i class="fa-solid fa-bolt"></i>&nbsp;&nbsp;CRYPTO BOT
-            </button>
-            <button class="pay-btn" onclick="App.pay('paypal')">
-                <i class="fa-brands fa-paypal"></i>&nbsp;&nbsp;PAYPAL GLOBAL
-            </button>
+        
+        <!-- Экран приложения (модальное окно) -->
+        <div id="app-modal" class="fixed inset-0 z-50 hidden">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeApp()"></div>
+            <div class="liquid-glass absolute bottom-0 left-0 right-0 h-[85vh] rounded-t-3xl p-6 overflow-hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" id="modal-app-icon">📱</div>
+                        <div>
+                            <h2 class="text-2xl font-bold" id="modal-app-title">App</h2>
+                            <p class="text-sm text-white/60" id="modal-app-subtitle">Interactive</p>
+                        </div>
+                    </div>
+                    <button onclick="closeApp()" class="w-10 h-10 rounded-full liquid-glass flex items-center justify-center interactive-element">
+                        ✕
+                    </button>
+                </div>
+                
+                <div id="modal-app-content" class="h-[calc(100%-100px)] overflow-y-auto">
+                    <!-- Контент приложения будет добавлен через JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Плавающие уведомления -->
+        <div id="floating-notifications" class="fixed top-16 right-6 z-40 space-y-3 max-w-sm">
+            <!-- Всплывающие уведомления -->
         </div>
     </div>
-
-    <div class="input-container" id="chat-input-box">
-        <input type="text" id="main-prompt" placeholder="Execute command..." autocomplete="off">
-        <button class="send-btn" onclick="App.send()">
-            <i class="fa-solid fa-arrow-up"></i>
-        </button>
-    </div>
-
-    <nav class="nav-bar">
-        <div class="nav-btn active" onclick="App.switch('ai', this)">
-            <i class="fa-solid fa-microchip"></i>
-        </div>
-        <div class="nav-btn" onclick="App.switch('ach', this)">
-            <i class="fa-solid fa-trophy"></i>
-        </div>
-        <div class="nav-btn" onclick="App.switch('pay', this)">
-            <i class="fa-solid fa-wallet"></i>
-        </div>
-    </nav>
-
+    
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        const API_URL = "https://твой-воркер.workers.dev";
-
-        const models = [
-            { id: 'gpt4', name: 'GPT-4o', icon: 'fa-brain', d: 'Omni intelligence' },
-            { id: 'o1', name: 'OpenAI o1', icon: 'fa-microchip', d: 'Reasoning model' },
-            { id: 'claude', name: 'Claude 3.5', icon: 'fa-feather', d: 'Natural writing' },
-            { id: 'gemini', name: 'Gemini 1.5', icon: 'fa-google', d: 'Fast & Smart' },
-            { id: 'llama', name: 'Llama 3.1', icon: 'fa-dragon', d: 'Meta Open Source' },
-            { id: 'mistral', name: 'Mistral Large', icon: 'fa-wind', d: 'Efficient AI' },
-            { id: 'midjourney', name: 'Midjourney', icon: 'fa-image', d: 'Art Generation' },
-            { id: 'dalle', name: 'DALL-E 3', icon: 'fa-paint-brush', d: 'Photo realism' },
-            { id: 'flux', name: 'Flux.1', icon: 'fa-wand-magic-sparkles', d: 'Next-gen Art' },
-            { id: 'codex', name: 'Codex', icon: 'fa-code', d: 'Coding expert' },
-            { id: 'deepseek', name: 'DeepSeek', icon: 'fa-microscope', d: 'Science & Logic' },
-            { id: 'perplex', name: 'Perplexity', icon: 'fa-search', d: 'Live Search' },
-            { id: 'grok', name: 'Grok-1', icon: 'fa-x', d: 'Real-time X' },
-            { id: 'sora', name: 'Sora', icon: 'fa-video', d: 'Video FX' },
-            { id: 'stable', name: 'SDXL', icon: 'fa-palette', d: 'Local Diffusion' }
-        ];
-
-        const App = {
-            currentModel: 'gpt4',
+        // ==================== КОНФИГУРАЦИЯ ====================
+        const API_URL = 'http://localhost:8000';
+        let ws = null;
+        let apps = [];
+        let notifications = [];
+        
+        // ==================== THREE.JS ФОН ====================
+        function initBackground() {
+            const canvas = document.getElementById('bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
             
-            init() {
-                document.getElementById('u-name').innerText = (tg.initDataUnsafe?.user?.first_name || "UNIT").toUpperCase();
-                if(tg.initDataUnsafe?.user?.photo_url) {
-                    document.getElementById('u-avatar').src = tg.initDataUnsafe.user.photo_url;
-                }
-
-                const container = document.getElementById('ai-container');
-                models.forEach(m => {
-                    const el = document.createElement('div');
-                    el.className = `ai-card ${m.id === this.currentModel ? 'active' : ''}`;
-                    el.innerHTML = `<i class="fa-solid ${m.icon}"></i><div class="name">${m.name}</div><div class="desc">${m.d}</div>`;
-                    
-                    // Mouse tracking for gradient effect
-                    el.addEventListener('mousemove', (e) => {
-                        const rect = el.getBoundingClientRect();
-                        el.style.setProperty('--mouse-x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
-                        el.style.setProperty('--mouse-y', `${((e.clientY - rect.top) / rect.height) * 100}%`);
-                    });
-                    
-                    el.onclick = () => {
-                        document.querySelectorAll('.ai-card').forEach(c => c.classList.remove('active'));
-                        el.classList.add('active');
-                        this.currentModel = m.id;
-                        tg.HapticFeedback.selectionChanged();
-                        
-                        // Smooth scale animation
-                        gsap.fromTo(el, { scale: 0.96 }, { scale: 1, duration: 0.4, ease: 'power2.out' });
-                    };
-                    
-                    container.appendChild(el);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Создаем плавающие орбы
+            const orbs = [];
+            const colors = [0x6366f1, 0x8b5cf6, 0xec4899, 0x3b82f6];
+            
+            for (let i = 0; i < 5; i++) {
+                const geometry = new THREE.SphereGeometry(Math.random() * 2 + 1, 64, 64);
+                const material = new THREE.MeshBasicMaterial({
+                    color: colors[i % colors.length],
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
                 });
+                const orb = new THREE.Mesh(geometry, material);
                 
-                this.sync();
-            },
-            
-            async sync() {
-                try {
-                    const r = await fetch(`${API_URL}/get-user?id=${tg.initDataUnsafe?.user?.id || 0}`);
-                    const d = await r.json();
-                    document.getElementById('u-credits').innerText = `CREDITS: ${d.credits || 0}`;
-                    if(d.credits > 1000) {
-                        document.getElementById('ach-rich').classList.add('unlocked');
-                    }
-                    this.unlockAch(JSON.parse(d.achievements || '["boot"]'));
-                } catch(e) {
-                    console.log('Sync error:', e);
-                }
-            },
-            
-            unlockAch(list) {
-                list.forEach(a => {
-                    const el = document.getElementById(`ach-${a}`);
-                    if(el) {
-                        el.classList.add('unlocked');
-                        gsap.fromTo(el, { scale: 0.95, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' });
-                    }
-                });
-            },
-            
-            switch(view, btn) {
-                tg.HapticFeedback.impactOccurred('medium');
-                
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                document.querySelectorAll('.view').forEach(v => {
-                    v.classList.remove('active');
-                });
-                
-                const nextView = document.getElementById('view-' + view);
-                nextView.classList.add('active');
-                
-                // Smooth entrance animation
-                gsap.fromTo(nextView, 
-                    { opacity: 0, y: 20, scale: 0.97 },
-                    { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: 'power3.out' }
+                orb.position.set(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 10
                 );
                 
-                document.getElementById('chat-input-box').style.display = view === 'ai' ? 'flex' : 'none';
+                orb.velocity = {
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                };
                 
-                // Input field animation
-                if(view === 'ai') {
-                    gsap.fromTo('#chat-input-box', 
-                        { y: 20, opacity: 0 },
-                        { y: 0, opacity: 1, duration: 0.4, ease: 'power3.out', delay: 0.1 }
-                    );
-                }
-            },
-            
-            send() {
-                const p = document.getElementById('main-prompt').value;
-                if(!p) return;
-                
-                // Button press animation
-                gsap.to('.send-btn', { scale: 0.9, duration: 0.1, yoyo: true, repeat: 1 });
-                
-                tg.sendData(JSON.stringify({ action: "generate", model: this.currentModel, prompt: p }));
-                tg.close();
-            },
-            
-            pay(method) {
-                tg.HapticFeedback.notificationOccurred('success');
-                tg.sendData(JSON.stringify({ action: "pay", method: method }));
-                tg.close();
+                scene.add(orb);
+                orbs.push(orb);
             }
-        };
-
-        const Scene3D = {
-            init() {
-                const container = document.getElementById('canvas-3d');
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
-                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
-                
-                renderer.setSize(container.offsetWidth, container.offsetHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                container.appendChild(renderer.domElement);
-
-                // Create multiple geometric shapes for visual interest
-                const geo = new THREE.IcosahedronGeometry(2, 2);
-                const mat = new THREE.MeshBasicMaterial({ 
-                    color: 0x00f3ff, 
-                    wireframe: true, 
-                    transparent: true, 
-                    opacity: 0.08 
-                });
-                const mesh = new THREE.Mesh(geo, mat);
-                scene.add(mesh);
-
-                // Add particles
-                const particlesGeo = new THREE.BufferGeometry();
-                const particlesCount = 200;
-                const posArray = new Float32Array(particlesCount * 3);
-                
-                for(let i = 0; i < particlesCount * 3; i++) {
-                    posArray[i] = (Math.random() - 0.5) * 8;
-                }
-                
-                particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                const particlesMat = new THREE.PointsMaterial({
-                    size: 0.02,
-                    color: 0x00f3ff,
-                    transparent: true,
-                    opacity: 0.5
-                });
-                const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
-                scene.add(particlesMesh);
-
-                camera.position.z = 5;
-
-                // Optimized animation loop
-                let time = 0;
-                function animate() {
-                    requestAnimationFrame(animate);
-                    time += 0.001;
-                    
-                    mesh.rotation.y += 0.002;
-                    mesh.rotation.x += 0.001;
-                    
-                    particlesMesh.rotation.y -= 0.0005;
-                    particlesMesh.position.y = Math.sin(time) * 0.2;
-                    
-                    renderer.render(scene, camera);
-                }
-                animate();
-
-                // Handle resize
-                window.addEventListener('resize', () => {
-                    camera.aspect = container.offsetWidth / container.offsetHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(container.offsetWidth, container.offsetHeight);
-                });
-            }
-        };
-
-        // Initialize app
-        window.onload = () => {
-            App.init();
-            Scene3D.init();
             
-            // Smooth loader animation
-            gsap.to('.loader-fill', { 
-                width: '100%', 
-                duration: 1.8, 
-                ease: 'power2.inOut',
+            camera.position.z = 15;
+            
+            // Анимация
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                orbs.forEach(orb => {
+                    orb.position.x += orb.velocity.x;
+                    orb.position.y += orb.velocity.y;
+                    orb.position.z += orb.velocity.z;
+                    
+                    // Отталкивание от границ
+                    if (Math.abs(orb.position.x) > 10) orb.velocity.x *= -1;
+                    if (Math.abs(orb.position.y) > 10) orb.velocity.y *= -1;
+                    if (Math.abs(orb.position.z) > 10) orb.velocity.z *= -1;
+                    
+                    orb.rotation.x += 0.001;
+                    orb.rotation.y += 0.001;
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Ресайз
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        // ==================== WEBSOCKET СОЕДИНЕНИЕ ====================
+        function connectWebSocket() {
+            const clientId = 'client_' + Math.random().toString(36).substr(2, 9);
+            ws = new WebSocket(`ws://localhost:8000/ws/${clientId}`);
+            
+            ws.onopen = () => {
+                console.log('Connected to Liquid OS');
+                document.getElementById('connection-status').textContent = '● Online';
+                document.getElementById('connection-status').className = 'text-xs text-green-400';
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connection-status').textContent = '● Offline';
+                document.getElementById('connection-status').className = 'text-xs text-red-400';
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'app_updated':
+                case 'app_state_change':
+                    updateAppData(data.app_id, data.data);
+                    break;
+                case 'new_notification':
+                    showFloatingNotification(data.notification);
+                    break;
+                case 'interaction':
+                    console.log('Interaction from', data.client_id);
+                    break;
+            }
+        }
+        
+        // ==================== ЗАГРУЗКА ДАННЫХ ====================
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}/api/apps`);
+                apps = await response.json();
+                renderApps();
+                updateWidgets();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                // Демо данные если сервер недоступен
+                loadDemoData();
+            }
+        }
+        
+        function loadDemoData() {
+            apps = [
+                { id: 'chat', name: 'Messages', icon: '💬', data: { chats: [{ name: 'Alice', last_message: 'Hey!' }] } },
+                { id: 'music', name: 'Music', icon: '🎵', data: { playlist: [{ title: 'Song 1', artist: 'Artist' }] } },
+                { id: 'photos', name: 'Photos', icon: '📸', data: {} },
+                { id: 'weather', name: 'Weather', icon: '🌤️', data: { current: { temp: 22, condition: 'Sunny' } } },
+                { id: 'notes', name: 'Notes', icon: '📝', data: { notes: [] } },
+                { id: 'calendar', name: 'Calendar', icon: '📅', data: {} },
+                { id: 'tasks', name: 'Tasks', icon: '✅', data: { tasks: [{ id: '1', title: 'Task 1', done: false }] } },
+                { id: 'files', name: 'Files', icon: '📁', data: {} },
+            ];
+            renderApps();
+            updateWidgets();
+        }
+        
+        // ==================== РЕНДЕРИНГ ====================
+        function renderApps() {
+            const grid = document.getElementById('apps-grid');
+            grid.innerHTML = '';
+            
+            apps.forEach((app, index) => {
+                const icon = document.createElement('div');
+                icon.className = 'app-icon flex flex-col items-center gap-2';
+                icon.innerHTML = `
+                    <div>${app.icon}</div>
+                    <span class="text-xs text-white/80">${app.name}</span>
+                `;
+                icon.onclick = () => openApp(app);
+                
+                gsap.from(icon, {
+                    opacity: 0,
+                    y: 20,
+                    duration: 0.4,
+                    delay: index * 0.05,
+                    ease: "power2.out"
+                });
+                
+                grid.appendChild(icon);
+            });
+        }
+        
+        function updateWidgets() {
+            // Погода
+            const weatherApp = apps.find(a => a.id === 'weather');
+            if (weatherApp && weatherApp.data.current) {
+                document.getElementById('weather-temp').textContent = `${weatherApp.data.current.temp}°`;
+                document.getElementById('weather-condition').textContent = weatherApp.data.current.condition;
+            }
+            
+            // Задачи
+            const tasksApp = apps.find(a => a.id === 'tasks');
+            if (tasksApp && tasksApp.data.tasks) {
+                const total = tasksApp.data.tasks.length;
+                const completed = tasksApp.data.tasks.filter(t => t.done).length;
+                document.getElementById('tasks-count').textContent = `${completed}/${total}`;
+            }
+        }
+        
+        function updateAppData(appId, data) {
+            const app = apps.find(a => a.id === appId);
+            if (app) {
+                app.data = { ...app.data, ...data };
+                updateWidgets();
+                
+                if (document.getElementById('modal-app-content').dataset.currentApp === appId) {
+                    renderAppContent(app);
+                }
+            }
+        }
+        
+        // ==================== ОТКРЫТИЕ ПРИЛОЖЕНИЙ ====================
+        function openApp(app) {
+            const modal = document.getElementById('app-modal');
+            const icon = document.getElementById('modal-app-icon');
+            const title = document.getElementById('modal-app-title');
+            const subtitle = document.getElementById('modal-app-subtitle');
+            const content = document.getElementById('modal-app-content');
+            
+            icon.textContent = app.icon;
+            title.textContent = app.name;
+            subtitle.textContent = 'Interactive App';
+            content.dataset.currentApp = app.id;
+            
+            renderAppContent(app);
+            
+            modal.classList.remove('hidden');
+            
+            gsap.from(modal.querySelector('.liquid-glass'), {
+                y: '100%',
+                duration: 0.5,
+                ease: "cubic-bezier(0.16, 1, 0.3, 1)"
+            });
+        }
+        
+        function closeApp() {
+            const modal = document.getElementById('app-modal');
+            
+            gsap.to(modal.querySelector('.liquid-glass'), {
+                y: '100%',
+                duration: 0.4,
+                ease: "cubic-bezier(0.16, 1, 0.3, 1)",
                 onComplete: () => {
-                    gsap.to('#loader', { 
-                        opacity: 0, 
-                        duration: 0.6, 
-                        ease: 'power3.in',
-                        onComplete: () => {
-                            document.getElementById('loader').style.display = 'none';
-                            
-                            // Entrance animation for header
-                            gsap.fromTo('.header', 
-                                { y: -20, opacity: 0 },
-                                { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
-                            );
-                            
-                            gsap.fromTo('.user-card', 
-                                { x: -20, opacity: 0 },
-                                { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out', delay: 0.2 }
-                            );
-                            
-                            gsap.fromTo('.stats-row', 
-                                { y: 20, opacity: 0 },
-                                { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out', delay: 0.3 }
-                            );
-                            
-                            gsap.fromTo('.ai-card', 
-                                { y: 30, opacity: 0, scale: 0.9 },
-                                { 
-                                    y: 0, 
-                                    opacity: 1, 
-                                    scale: 1, 
-                                    duration: 0.6, 
-                                    ease: 'power3.out',
-                                    stagger: 0.05,
-                                    delay: 0.4
-                                }
-                            );
-                        }
-                    });
+                    modal.classList.add('hidden');
                 }
             });
-        };
+        }
+        
+        function renderAppContent(app) {
+            const content = document.getElementById('modal-app-content');
+            
+            switch(app.id) {
+                case 'chat':
+                    content.innerHTML = renderChatApp(app.data);
+                    break;
+                case 'music':
+                    content.innerHTML = renderMusicApp(app.data);
+                    break;
+                case 'tasks':
+                    content.innerHTML = renderTasksApp(app.data);
+                    break;
+                case 'notes':
+                    content.innerHTML = renderNotesApp(app.data);
+                    break;
+                case 'weather':
+                    content.innerHTML = renderWeatherApp(app.data);
+                    break;
+                default:
+                    content.innerHTML = `
+                        <div class="text-center text-white/60 py-12">
+                            <div class="text-6xl mb-4">${app.icon}</div>
+                            <p>Приложение в разработке</p>
+                        </div>
+                    `;
+            }
+        }
+        
+        function renderChatApp(data) {
+            const chats = data.chats || [];
+            return `
+                <div class="space-y-3">
+                    ${chats.map(chat => `
+                        <div class="liquid-glass p-4 interactive-element">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold">${chat.name}</div>
+                                    <div class="text-sm text-white/60">${chat.last_message}</div>
+                                </div>
+                                ${chat.unread ? `<span class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs">${chat.unread}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderMusicApp(data) {
+            const playlist = data.playlist || [];
+            return `
+                <div class="space-y-3">
+                    <div class="liquid-glass p-6 mb-4 text-center">
+                        <div class="w-32 h-32 mx-auto mb-4 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-6xl">🎵</div>
+                        <div class="text-xl font-bold">Now Playing</div>
+                        <div class="text-white/60">Select a song</div>
+                    </div>
+                    ${playlist.map(song => `
+                        <div class="liquid-glass p-4 interactive-element flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">🎶</div>
+                            <div class="flex-1">
+                                <div class="font-semibold">${song.title}</div>
+                                <div class="text-sm text-white/60">${song.artist}</div>
+                            </div>
+                            <button class="w-10 h-10 rounded-full liquid-glass flex items-center justify-center interactive-element">▶</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderTasksApp(data) {
+            const tasks = data.tasks || [];
+            return `
+                <div class="space-y-3">
+                    ${tasks.map(task => `
+                        <div class="liquid-glass p-4 interactive-element flex items-center gap-4" onclick="toggleTask('${task.id}')">
+                            <div class="w-6 h-6 rounded-full border-2 ${task.done ? 'bg-green-500 border-green-500' : 'border-white/30'} flex items-center justify-center">
+                                ${task.done ? '✓' : ''}
+                            </div>
+                            <div class="flex-1 ${task.done ? 'line-through text-white/40' : ''}">
+                                <div class="font-semibold">${task.title}</div>
+                                <div class="text-xs text-white/60 capitalize">${task.priority}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    <button class="w-full liquid-glass p-4 interactive-element text-white/60 hover:text-white" onclick="addTask()">
+                        + Добавить задачу
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderNotesApp(data) {
+            const notes = data.notes || [];
+            return `
+                <div class="space-y-3">
+                    ${notes.map(note => `
+                        <div class="liquid-glass p-4 interactive-element">
+                            <div class="font-semibold mb-2">${note.title}</div>
+                            <div class="text-sm text-white/60">${note.content}</div>
+                        </div>
+                    `).join('')}
+                    <button class="w-full liquid-glass p-4 interactive-element text-white/60 hover:text-white" onclick="addNote()">
+                        + Добавить заметку
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderWeatherApp(data) {
+            const current = data.current || {};
+            const forecast = data.forecast || [];
+            return `
+                <div class="space-y-6">
+                    <div class="liquid-glass p-8 text-center">
+                        <div class="text-6xl mb-4">🌤️</div>
+                        <div class="text-5xl font-bold mb-2">${current.temp}°</div>
+                        <div class="text-xl text-white/80">${current.condition}</div>
+                        <div class="text-sm text-white/60 mt-2">Humidity: ${current.humidity || '--'}%</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        ${forecast.map(day => `
+                            <div class="liquid-glass p-4 text-center">
+                                <div class="text-sm text-white/60 mb-2">${day.day}</div>
+                                <div class="text-2xl mb-2">☀️</div>
+                                <div class="font-bold">${day.temp}°</div>
+                                <div class="text-xs text-white/60">${day.condition}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ==================== ИНТЕРАКТИВНОСТЬ ====================
+        function toggleTask(taskId) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'app_action',
+                    app_id: 'tasks',
+                    action: 'toggle_task',
+                    task_id: taskId
+                }));
+            } else {
+                // Локальное обновление
+                const app = apps.find(a => a.id === 'tasks');
+                if (app) {
+                    const task = app.data.tasks.find(t => t.id === taskId);
+                    if (task) {
+                        task.done = !task.done;
+                        renderAppContent(app);
+                        updateWidgets();
+                    }
+                }
+            }
+        }
+        
+        function addTask() {
+            const title = prompt('Название задачи:');
+            if (title && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'app_action',
+                    app_id: 'tasks',
+                    action: 'add_task',
+                    title: title
+                }));
+            }
+        }
+        
+        function addNote() {
+            const title = prompt('Название заметки:');
+            const content = prompt('Содержание:');
+            if (title && content) {
+                // Добавление заметки
+            }
+        }
+        
+        // ==================== УВЕДОМЛЕНИЯ ====================
+        function showFloatingNotification(notification) {
+            const container = document.getElementById('floating-notifications');
+            const notif = document.createElement('div');
+            notif.className = 'liquid-glass p-4 notification gradient-border';
+            notif.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl">${getNotificationIcon(notification.type)}</div>
+                    <div class="flex-1">
+                        <div class="font-semibold text-sm">${notification.title}</div>
+                        <div class="text-xs text-white/60 mt-1">${notification.message}</div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(notif);
+            
+            // Автоматическое удаление через 5 секунд
+            setTimeout(() => {
+                gsap.to(notif, {
+                    opacity: 0,
+                    x: 20,
+                    duration: 0.3,
+                    onComplete: () => notif.remove()
+                });
+            }, 5000);
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                message: '💬',
+                reminder: '⏰',
+                update: '🔄',
+                achievement: '🏆'
+            };
+            return icons[type] || '🔔';
+        }
+        
+        // ==================== ЧАСЫ ====================
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+        }
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initBackground();
+            connectWebSocket();
+            loadData();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Haptic feedback для мобильных
+            if ('vibrate' in navigator) {
+                document.querySelectorAll('.interactive-element').forEach(el => {
+                    el.addEventListener('click', () => {
+                        navigator.vibrate(10);
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
